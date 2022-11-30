@@ -1,0 +1,171 @@
+---
+title: "Chordoma Analysis"
+author: "John Santiago"
+date: "2022-11-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rgl)
+knitr::knit_hooks$set(webgl = hook_webgl)
+```
+
+```{r echo=F, include=FALSE}
+
+library(edgeR)
+library(heatmaply)
+library(ggplot2)
+library(org.Hs.eg.db)
+library("biomaRt")
+ensembl = useMart("ensembl",dataset="hsapiens_gene_ensembl")
+
+##Combine all count tables
+count.dir="/Users/johncsantiago/Documents/ChordomaRNAseq/Count_Tables/"
+count.files=list.files(count.dir)
+countdata=read.csv(paste0(count.dir,count.files[1]),header=F,sep="\t",row.names=1)
+i=2
+while(i<=length(count.files)){
+  temp=read.csv(paste0(count.dir,count.files[i]),header=F,sep="\t",row.names=1)[row.names(countdata),]
+  countdata=cbind(countdata,temp)
+  i=i+1
+}
+
+colnames(countdata)=substring(count.files,1,(nchar(count.files)-26))
+
+groups=substring(colnames(countdata),1,1)
+groups[groups=="C"]="Chordoma"
+groups[groups=="N"]="Notochord"
+names(groups)=colnames(countdata)
+
+annot =read.csv("https://raw.githubusercontent.com/johncsantiago/SData/master/Apoptosis%20Code/AnnotationData.csv",row.names=1)
+
+##normalize data
+x <- countdata
+group <- factor(groups)
+y <- DGEList(counts=x,group=group)
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE]
+z <- calcNormFactors(y, method = "TMM")
+##normalized cpm
+cpmdata=cpm(z)
+
+CHI3L1=cpmdata[annot[grep("CHI3L1",annot[,2]),1],]
+TBXT=cpmdata[annot[grep("TBXT",annot[,2]),1],]
+
+
+pca <- prcomp(t(cpmdata), scale.=TRUE) 
+gr <- as.data.frame(groups)
+eigs <- pca$sdev^2
+ve=signif(((eigs / sum(eigs))*100),4)
+pca.data=data.frame(Sample=row.names(gr),
+                    PC1=scale(pca$x[,1]),
+                    PC2=scale(pca$x[,2]),
+                    PC3=scale(pca$x[,3]),
+                    Percent1=ve[1],
+                    Percent2=ve[2],
+                    Percent3=ve[3])
+```
+
+```{r echo=F}
+##ggplot(pca.data, aes(x = PC1, y = PC2)) +
+##        geom_point(aes(##shape = factor(groups), 
+##                   colour           = factor(groups)),
+##                   size  = 5,
+##                   alpha = 1) +
+##        labs(x=paste0("PC1 (",pca.data$Percent1[1],"%)"), 
+##             y=paste0("PC2 (",pca.data$Percent2[1],"%)"))
+```
+
+
+```{r echo=F,include=F}
+
+design=model.matrix(~group)
+y <- estimateDisp(y,design)
+fit <- glmQLFit(y,design)
+qlf <- glmQLFTest(fit,coef=2)
+topTags(qlf)
+DEanalysis=topTags(qlf,n=nrow(countdata))$table
+sig.DEG=DEanalysis[DEanalysis$FDR<.05,]
+
+ensembl_list <- row.names(sig.DEG)
+human <- useMart("ensembl", dataset="hsapiens_gene_ensembl")
+sig.DEG.symbols=getBM(attributes=c("hgnc_symbol","ensembl_gene_id"), filters="ensembl_gene_id", values=ensembl_list, mart=human)
+sig.DEG.symbols=sig.DEG.symbols[nchar(sig.DEG.symbols[,1])>0,]
+row.names(sig.DEG.symbols)=sig.DEG.symbols[,2]
+colnames(sig.DEG.symbols)=c("symbol","ensembl")
+no.symbol=setdiff(row.names(sig.DEG),row.names(sig.DEG.symbols))
+no.symbol=data.frame(symbol=no.symbol, ensembl=no.symbol)
+row.names(no.symbol)=no.symbol[,1]
+sig.DEG.symbols=rbind(sig.DEG.symbols,no.symbol)
+##sig.DEG=sig.DEG[row.names(sig.DEG.symbols),]
+##row.names(sig.DEG)=sig.DEG.symbols[,1]
+```
+### FIGURE 1: An **Interactive** PCA Analysis of the chordoma (red) and notochord (blue) samples provided by *http://xavierlab2.mgh.harvard.edu/*
+```{r, test-rgl, webgl=TRUE,echo=F, fig.height=8, fig.width=8}
+x <- pca.data$PC1
+y <- pca.data$PC2
+z <- pca.data$PC3
+rgl.open()
+rgl.viewpoint( theta = -45, phi = 30)
+plot3d(x, y, z, col = c("red","dodgerblue")[as.numeric(factor(groups))],type='s',size=3,
+       xlab = paste0("PC1 (",pca.data$Percent1[1],"%)"),
+       ylab = paste0("PC2 (",pca.data$Percent2[1],"%)"),
+       zlab = paste0("PC3 (",pca.data$Percent3[1],"%)"))
+
+plot3d(x=c(-2.25,1.1),y=c(0,0),z=c(0,0),type="l",add=T, lty=2,lwd=2,col="black")
+plot3d(x=c(0,0),y=c(-1.75,1.75),z=c(0,0),type="l",add=T, lty=2,lwd=2,col="black")
+plot3d(x=c(0,0),y=c(0,0),z=c(-1.25,1.5),type="l",add=T, lty=2,lwd=2,col="black")
+legend3d("topright", legend = unique(groups), pch=19, col = c("red","dodgerblue"),magnify=2,bty="n",inset=.1)
+grid3d(c("x+","y","z"))
+
+
+```
+
+
+Transcriptome libraries were aligned to the *Genome Reference Consortium Human Build 38 (GRCh38)* reference genome before trimming low count reads and normalizing to library size in edgeR. (The plot can be manually rotated to change the perspective)
+<br >
+
+The expression profiles appear heterogeneous with no clear distinction between conditions. In my opinion, this is why it will be critical to have access to donor metrics and also to minimize variables such as sample prep or tissue heterogeneity in the samples. Alternatively, we could use a much larger set of samples.
+
+
+<br ><br ><br >
+<hr ><hr >
+
+### FIGURE 2: Boxplot of CHI3L1 expression in chordoma and notochord samples
+```{r echo=F}
+
+boxplot(CHI3L1~groups,xlab="",
+     main="CHI3L1",ylab="Counts per Million Reads")
+points(x=as.numeric(factor(groups)),y=CHI3L1,cex=1.5,pch=21,bg=c("red","dodgerblue")[as.numeric(factor(groups))])
+text(x=1.5,y=12,label=paste0("FDR = ",signif(DEanalysis[annot[grep("CHI3L1",annot[,2]),1],"FDR"],3)))
+
+```
+
+CHI3L1 expression levels are very low in both chordoma and notochord samples with no significant difference in expression between the two tissue types.
+
+
+<br ><br ><br >
+<hr ><hr  >
+
+### FIGURE 3: An **interactive** heatmap of all differentially expressed genes between the chordoma and notochord samples
+```{r echo = F, fig.height=15}
+custom.text=signif(cpmdata[row.names(sig.DEG),],4)
+i=1
+while(i<=ncol(custom.text)){
+  custom.text[,i]=paste0("cpm: ",custom.text[,i])
+  i=i+1
+}
+
+heatmaply(cpmdata[row.names(sig.DEG),],trace="none",col=RdYlBu(100)[100:1], scale="row",
+          dendrogram = "row",Rowv=T,Colv=T,
+          labRow = sig.DEG.symbols[row.names(sig.DEG),1],cexRow = .5,
+          custom_hovertext=custom.text)
+
+
+```
+
+All genes that met the Benjamin-Hochberg false discovery rate cutoff of 0.05 are plotted. (Hovering over a cell will give gene information).
+<br >
+
+Again, the samples appear largely heterogeneous with many of the lacking a consistent expression profile between conditions.
