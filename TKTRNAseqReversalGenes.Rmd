@@ -1,0 +1,1476 @@
+---
+title: "G85R Analysis"
+author: "John Santiago"
+date: "2024-08-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r include = F, echo = F}
+
+library(plotly)
+library(edgeR)
+library(heatmaply)
+library(org.Dm.eg.db)
+
+##load all files from github
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+cpmdata = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+groups  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+TKT.EdgeR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+TKT.EdgeR.FC = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FCTable.csv"),row.names = 1)
+
+G85R.meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT_meancpmdata.csv", row.names = 1)
+
+groups = groups[colnames(cpmdata),]
+
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+
+##Clean Trait Data and calculate CPMs
+countdata=read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.counttable.csv",row.names=1)
+
+
+##normalize data
+countdata=countdata[, row.names(groups)]
+x <- countdata
+gr <- factor(groups$Group)
+y <- DGEList(counts=x,group=gr)
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE]
+z <- calcNormFactors(y, method = "TMM")
+design<-model.matrix(~0 + gr)
+colnames(design) = unique(gr)
+z = estimateDisp(z, design, robust = T)
+fit <- glmQLFit(z, design)
+
+compare = makeContrasts(TktDfGR.F-WT.F, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.FDfxWT.FC=DEout
+sGR.FDfxWT.FC=DEout[DEout$FDR<.05,]
+
+TKT.EdgeR = cbind(TKT.EdgeR, GR.FDfxWT.FC[row.names(TKT.EdgeR), "FDR"])
+colnames(TKT.EdgeR)[17] = 'GR.FDfxWT.FC'
+
+TKT.EdgeR.FC = cbind(TKT.EdgeR.FC, GR.FDfxWT.FC[row.names(TKT.EdgeR), "logFC"])
+colnames(TKT.EdgeR.FC)[17] = 'GR.FDfxWT.FC'
+
+compare = makeContrasts(TktDfGR.M-WT.M, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.MDfxWT.MC=DEout
+sGR.MDfxWT.MC=DEout[DEout$FDR<.05,]
+
+TKT.EdgeR = cbind(TKT.EdgeR, GR.MDfxWT.MC[row.names(TKT.EdgeR), "FDR"])
+colnames(TKT.EdgeR)[18] = 'GR.MDfxWT.MC'
+
+TKT.EdgeR.FC = cbind(TKT.EdgeR.FC, GR.MDfxWT.MC[row.names(TKT.EdgeR), "logFC"])
+colnames(TKT.EdgeR.FC)[18] = 'GR.MDfxWT.MC'
+
+
+
+
+compare = makeContrasts(TktOEGR.F-WT.F, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.FOExWT.FC=DEout
+sGR.FOExWT.FC=DEout[DEout$FDR<.05,]
+
+TKT.EdgeR = cbind(TKT.EdgeR, GR.FOExWT.FC[row.names(TKT.EdgeR), "FDR"])
+colnames(TKT.EdgeR)[19] = 'GR.FOExWT.FC'
+
+TKT.EdgeR.FC = cbind(TKT.EdgeR.FC, GR.FOExWT.FC[row.names(TKT.EdgeR), "logFC"])
+colnames(TKT.EdgeR.FC)[19] = 'GR.FOExWT.FC'
+
+compare = makeContrasts(TktOEGR.M-WT.M, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.MOExWT.MC=DEout
+sGR.MOExWT.MC=DEout[DEout$FDR<.05,]
+
+TKT.EdgeR = cbind(TKT.EdgeR, GR.MOExWT.MC[row.names(TKT.EdgeR), "FDR"])
+colnames(TKT.EdgeR)[20] = 'GR.MOExWT.MC'
+
+TKT.EdgeR.FC = cbind(TKT.EdgeR.FC, GR.MOExWT.MC[row.names(TKT.EdgeR), "logFC"])
+colnames(TKT.EdgeR.FC)[20] = 'GR.MOExWT.MC'
+
+```
+
+
+##Identifying reversal genes
+
+```{r echo = F}
+
+##comparisons
+primary = "GRxWT.FC"
+rescue = "GRF.CxDf"
+
+x = "GRxWT.FC"
+y = "GR.FDfxWT.FC"
+
+mean.data = G85R.meancpm[, c('GR.F', 'WT.F',
+                             'TktDfGR.F', 'TktDfWT.F')]
+
+min.expression = 10
+
+##Reversal pattern
+FC.data = TKT.EdgeR.FC[, c(primary, rescue)]
+FC.data = rbind(FC.data[FC.data[,primary] < 0 & FC.data[,rescue] > 0,],
+                FC.data[FC.data[,primary] > 0 & FC.data[,rescue] < 0,])
+reversals = row.names(FC.data)
+
+##FC cutoff (currently a 25% increase or decrease in at least 1 condition)
+FC.cutoff = rbind(FC.data[FC.data[,primary]  < -log2(1.25) & FC.data[,rescue] > log2(1.25),],
+              FC.data[FC.data[,primary]  > log2(1.25) & FC.data[,rescue] < -log2(1.25),])
+FC.cutoff = row.names(FC.cutoff)
+
+##Sig cutoff. Currently, at least 1 significant change
+sig.rescue = TKT.EdgeR[TKT.EdgeR[,primary]  < .05 |
+                       TKT.EdgeR[,rescue] < .05, ]
+sig.rescue = row.names(sig.rescue)
+
+reversal.genes = intersect(intersect(reversals, FC.cutoff),sig.rescue)
+
+FC.data = TKT.EdgeR.FC[reversal.genes, c(primary, rescue)]
+
+  FC.data = TKT.EdgeR.FC[reversal.genes, c(x, y)]
+  FDR.data = TKT.EdgeR[reversal.genes, c(x, y)]
+  mean.data = mean.data[reversal.genes, ]
+  
+
+  
+  
+data = data.frame(Symbol = GeneIDKey[reversal.genes, "Symbol"],
+                  FBgn = reversal.genes,
+                  FDR1 = -log2(FDR.data[, x]),
+                  FDR2 = -log2(FDR.data[, y]),
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+
+  main.title = "Female TKT-Df Reversal Genes"
+  
+  data$Color[(data$FC1 - 1) > data$FC2] = 'royalblue'
+  data$Color[(data$FC2 - 1) > data$FC1] = 'firebrick' 
+  #data$Color[data$Symbol == "Arc1"] = 'gold'
+  size = data.frame(G85R = apply(mean.data[,c(1,3)], 1, mean),
+                    WT = mean.data[,c(2)])
+  size = size + .001
+  data$size = log2(apply(size, 1, max))
+  data$size[data$size<3] = 1
+  
+  data = na.omit(data)
+  data = data[data$size > log2(min.expression),]
+  data$size = 5*data$size
+
+  female.Df.reverse = data
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+
+  fig
+```
+
+
+```{r echo = F}
+
+##comparisons
+primary = "GRxWT.MC"
+rescue = "GRM.CxDf"
+
+x = "GRxWT.MC"
+y = "GR.MDfxWT.MC"
+
+mean.data = G85R.meancpm[, c('GR.M', 'WT.M',
+                             'TktDfGR.M', 'TktDfWT.M')]
+
+min.expression = 10
+
+##Reversal pattern
+FC.data = TKT.EdgeR.FC[, c(primary, rescue)]
+FC.data = rbind(FC.data[FC.data[,primary] < 0 & FC.data[,rescue] > 0,],
+                FC.data[FC.data[,primary] > 0 & FC.data[,rescue] < 0,])
+reversals = row.names(FC.data)
+
+##FC cutoff (currently a 25% increase or decrease in at least 1 condition)
+FC.cutoff = rbind(FC.data[FC.data[,primary]  < -log2(1.25) & FC.data[,rescue] > log2(1.25),],
+              FC.data[FC.data[,primary]  > log2(1.25) & FC.data[,rescue] < -log2(1.25),])
+FC.cutoff = row.names(FC.cutoff)
+
+##Sig cutoff. Currently, at least 1 significant change
+sig.rescue = TKT.EdgeR[TKT.EdgeR[,primary]  < .05 |
+                       TKT.EdgeR[,rescue] < .05, ]
+sig.rescue = row.names(sig.rescue)
+
+reversal.genes = intersect(intersect(reversals, FC.cutoff),sig.rescue)
+
+FC.data = TKT.EdgeR.FC[reversal.genes, c(primary, rescue)]
+
+  FC.data = TKT.EdgeR.FC[reversal.genes, c(x, y)]
+  FDR.data = TKT.EdgeR[reversal.genes, c(x, y)]
+  mean.data = mean.data[reversal.genes, ]
+  
+
+  
+  
+data = data.frame(Symbol = GeneIDKey[reversal.genes, "Symbol"],
+                  FBgn = reversal.genes,
+                  FDR1 = -log2(FDR.data[, x]),
+                  FDR2 = -log2(FDR.data[, y]),
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+
+  main.title = "Male TKT-Df Reversal Genes"
+  
+  data$Color[(data$FC1 - 1) > data$FC2] = 'royalblue'
+  data$Color[(data$FC2 - 1) > data$FC1] = 'firebrick' 
+  #data$Color[data$Symbol == "Arc1"] = 'gold'
+  size = data.frame(G85R = apply(mean.data[,c(1,3)], 1, mean),
+                    WT = mean.data[,c(2)])
+  size = size + .001
+  data$size = log2(apply(size, 1, max))
+  data$size[data$size<3] = 1
+  
+  data = na.omit(data)
+  data = data[data$size > log2(min.expression),]
+  data$size = 5*data$size
+  
+  male.Df.reverse = data
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+
+  fig
+```
+
+
+```{r echo = F}
+
+##comparisons
+primary = "GRxWT.FC"
+rescue = "GRF.CxOE"
+
+x = "GRxWT.FC"
+y = "GR.FOExWT.FC"
+
+mean.data = G85R.meancpm[, c('GR.F', 'WT.F',
+                             'TktOEGR.F', 'TktOEWT.F')]
+
+min.expression = 10
+
+##Reversal pattern
+FC.data = TKT.EdgeR.FC[, c(primary, rescue)]
+FC.data = rbind(FC.data[FC.data[,primary] < 0 & FC.data[,rescue] > 0,],
+                FC.data[FC.data[,primary] > 0 & FC.data[,rescue] < 0,])
+reversals = row.names(FC.data)
+
+##FC cutoff (currently a 25% increase or decrease in at least 1 condition)
+FC.cutoff = rbind(FC.data[FC.data[,primary]  < -log2(1.25) & FC.data[,rescue] > log2(1.25),],
+              FC.data[FC.data[,primary]  > log2(1.25) & FC.data[,rescue] < -log2(1.25),])
+FC.cutoff = row.names(FC.cutoff)
+
+##Sig cutoff. Currently, at least 1 significant change
+sig.rescue = TKT.EdgeR[TKT.EdgeR[,primary]  < .05 |
+                       TKT.EdgeR[,rescue] < .05, ]
+sig.rescue = row.names(sig.rescue)
+
+reversal.genes = intersect(intersect(reversals, FC.cutoff),sig.rescue)
+
+FC.data = TKT.EdgeR.FC[reversal.genes, c(primary, rescue)]
+
+  FC.data = TKT.EdgeR.FC[reversal.genes, c(x, y)]
+  FDR.data = TKT.EdgeR[reversal.genes, c(x, y)]
+  mean.data = mean.data[reversal.genes, ]
+  
+
+  
+  
+data = data.frame(Symbol = GeneIDKey[reversal.genes, "Symbol"],
+                  FBgn = reversal.genes,
+                  FDR1 = -log2(FDR.data[, x]),
+                  FDR2 = -log2(FDR.data[, y]),
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+
+  main.title = "Female TKT-OE Reversal Genes"
+  
+  data$Color[(data$FC1 - 1) > data$FC2] = 'royalblue'
+  data$Color[(data$FC2 - 1) > data$FC1] = 'firebrick' 
+  #data$Color[data$Symbol == "Arc1"] = 'gold'
+  size = data.frame(G85R = apply(mean.data[,c(1,3)], 1, mean),
+                    WT = mean.data[,c(2)])
+  size = size + .001
+  data$size = log2(apply(size, 1, max))
+  data$size[data$size<3] = 1
+  
+  data = na.omit(data)
+  data = data[data$size > log2(min.expression),]
+  data$size = 5*data$size
+
+  female.OE.reverse = data
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+
+  fig
+```
+
+
+```{r echo = F}
+
+##comparisons
+primary = "GRxWT.MC"
+rescue = "GRM.CxOE"
+
+x = "GRxWT.MC"
+y = "GR.MOExWT.MC"
+
+mean.data = G85R.meancpm[, c('GR.M', 'WT.M',
+                             'TktOEGR.M', 'TktOEWT.M')]
+
+min.expression = 10
+
+##Reversal pattern
+FC.data = TKT.EdgeR.FC[, c(primary, rescue)]
+FC.data = rbind(FC.data[FC.data[,primary] < 0 & FC.data[,rescue] > 0,],
+                FC.data[FC.data[,primary] > 0 & FC.data[,rescue] < 0,])
+reversals = row.names(FC.data)
+
+##FC cutoff (currently a 25% increase or decrease in at least 1 condition)
+FC.cutoff = rbind(FC.data[FC.data[,primary]  < -log2(1.25) & FC.data[,rescue] > log2(1.25),],
+              FC.data[FC.data[,primary]  > log2(1.25) & FC.data[,rescue] < -log2(1.25),])
+FC.cutoff = row.names(FC.cutoff)
+
+##Sig cutoff. Currently, at least 1 significant change
+sig.rescue = TKT.EdgeR[TKT.EdgeR[,primary]  < .05 |
+                       TKT.EdgeR[,rescue] < .05, ]
+sig.rescue = row.names(sig.rescue)
+
+reversal.genes = intersect(intersect(reversals, FC.cutoff),sig.rescue)
+
+FC.data = TKT.EdgeR.FC[reversal.genes, c(primary, rescue)]
+
+  FC.data = TKT.EdgeR.FC[reversal.genes, c(x, y)]
+  FDR.data = TKT.EdgeR[reversal.genes, c(x, y)]
+  mean.data = mean.data[reversal.genes, ]
+  
+
+  
+  
+data = data.frame(Symbol = GeneIDKey[reversal.genes, "Symbol"],
+                  FBgn = reversal.genes,
+                  FDR1 = -log2(FDR.data[, x]),
+                  FDR2 = -log2(FDR.data[, y]),
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+
+  main.title = "Male TKT-OE Reversal Genes"
+  
+  data$Color[(data$FC1 - 1) > data$FC2] = 'royalblue'
+  data$Color[(data$FC2 - 1) > data$FC1] = 'firebrick' 
+  #data$Color[data$Symbol == "Arc1"] = 'gold'
+  size = data.frame(G85R = apply(mean.data[,c(1,3)], 1, mean),
+                    WT = mean.data[,c(2)])
+  size = size + .001
+  data$size = log2(apply(size, 1, max))
+  data$size[data$size<3] = 1
+  
+  data = na.omit(data)
+  data = data[data$size > log2(min.expression),]
+  data$size = 5*data$size
+
+  male.OE.reverse = data
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+
+  fig
+```
+
+##Looking for common reversal genes
+```{r echo = F}
+library(VennDiagram)
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1="Female Df"
+set2="Male Df"
+set3="Female OE"
+set4="Male OE"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=(female.Df.reverse$FBgn)
+s2=(male.Df.reverse$FBgn)
+s3=(female.OE.reverse$FBgn)
+s4=(male.OE.reverse$FBgn)
+
+main = "Reversal Genes"
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1, title = "main")
+
+```
+
+##The 19 common genes:
+
+
+```{r echo = F}
+
+
+
+G85R.gene = function(FBgn, name){
+gene = data.frame(cpm = as.numeric(cpmdata[FBgn,]), condition = groups$Group, group = paste0(groups$Genotype, groups$Sex))
+
+gene$group = factor(gene$group, levels = c(unique(gene$group)))
+gene$condition = factor(gene$condition, levels = c('WT.F', "TktDfWT.F", "TktOEWT.F",
+                                                   'GR.F', "TktDfGR.F", "TktOEGR.F",
+                                                   'WT.M', "TktDfWT.M", "TktOEWT.M",
+                                                   'GR.M', "TktDfGR.M", "TktOEGR.M"))
+
+par(mar = c(5,7,5,2))
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(min(gene$cpm), max(gene$cpm)),
+     xlim = c(.5, 12.5),
+     xaxt = "n",
+     ylab="",
+     yaxt = "n",
+     xlab = NA)
+
+rect(0, 0-(1.5*max(gene$cpm)), 13, 1.5*max(gene$cpm), col = 'gray95')
+
+boxplot(gene$cpm~gene$condition, 
+        xlab="",
+        las = 2, 
+        cex.axis = .8,
+        xaxt = 'none',
+        yaxt = 'none',
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        add = T,
+        col = c(rep("honeydew", 3),
+                rep("thistle1", 3),
+                rep("lightcyan", 3),
+                rep("lightyellow", 3)))
+
+box(lwd = 2)
+
+points(x=as.numeric(factor(gene$condition)),
+       y=gene$cpm,
+       cex=1,
+       pch=21,
+       bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
+
+axis(side = 1,
+     at = 1:12,
+     labels = rep(c("Control", "Df", "OE"), 4),
+     line = 0,
+     cex.axis = .75,
+     lwd.ticks = 2)
+
+axis(side = 2,
+     line = 0,
+     cex.axis = 1,
+     lwd.ticks = 2,
+     las = 2)
+
+axis(side = 2,
+     at = .5*(max(gene$cpm) + min(gene$cpm)),
+     label = "Counts per million reads",
+     tick = F,
+     padj = -3,
+     cex.axis = 1.25)
+
+axis(side = 1,
+     at = c(2, 5, 8, 11),
+     labels = c("Silent", "G85R","Silent", "G85R"),
+     tick = F,
+     padj = 2,
+     cex.axis = 1)
+axis(side = 3,
+     at = c(3.5, 9.5),
+     labels = c("Female", "Male"),
+     tick = F,
+     padj = .5,
+     cex.axis = 1.5)
+
+axis(side = 3,
+     at = 6.5,
+     labels = name,
+     tick = F,
+     padj = -1.5,
+     cex.axis = 2)
+
+axis(side = 3,
+     at = c(3.5,9.5),
+     tick = T,
+     outer = T,
+     labels = F,
+     line = -2.25,
+     lwd.ticks = 0)
+
+xline1 = min(gene$cpm) - (max(gene$cpm)-min(gene$cpm))*.04
+xline2 = min(gene$cpm) - (max(gene$cpm)-min(gene$cpm))*.19
+lines(x=c(3.5,3.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+lines(x=c(6.5,6.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+lines(x=c(9.5,9.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+abline(v = 6.5, lty = 2, lwd = 2)
+
+}
+
+```
+
+
+```{r echo = F}
+common.symbol = GeneIDKey[intersect(s1,intersect(s2,intersect(s3,s4))),'Symbol']
+
+common.FBgn = GeneIDKey[intersect(s1,intersect(s2,intersect(s3,s4))),'FBgn']
+
+
+```
+
+
+```{r echo = F, fig.width=8}
+i=1
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##Cyp4p1; Cytochrome P450 4p1; May be involved in the metabolism of insect hormones and in the breakdown of synthetic insecticides.
+
+```{r echo = F, fig.width=8}
+i=2
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##CG13962; Unknown function
+
+
+```{r echo = F, fig.width=8}
+i=3
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##Cpr51A; Cuticular protein 51A; Predicted to be a structural constituent of chitin-based larval cuticle. Involved in sexual reproduction. Located in extracellular space.
+
+```{r echo = F, fig.width=8}
+i=4
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##CG11438; Predicted to enable phosphatidate phosphatase activity. Predicted to be involved in phospholipid dephosphorylation; phospholipid metabolic process; and signal transduction. Predicted to be active in plasma membrane.
+
+```{r echo = F, fig.width=8}
+i=5
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##Sgs5bis; Predicted to be involved in puparial adhesion. Predicted to be located in adhesive extracellular matrix.
+
+```{r echo = F, fig.width=8}
+i=6
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##sad; shadow; shadow (sad) encodes a cytochrome P450 involved in ecdysteroid biosynthesis. It shows a mitochondrial localization and catalyzes the addition of a hydroxyl group to the 2 carbon of the cholesterol ring. sad mutants fail to undergo head involution, dorsal closure or to secrete cuticle.
+
+```{r echo = F, fig.width=8}
+i=7
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##Lip2; Lipase 2; Predicted to enable triglyceride lipase activity. Predicted to be involved in lipid metabolic process. Human ortholog(s) of this gene implicated in Wolman disease; autosomal recessive congenital ichthyosis 8; and cholesterol ester storage disease.
+
+```{r echo = F, fig.width=8}
+i=8
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##CG4757; Enables serine hydrolase activity. Is expressed in adult head. Human ortholog(s) of this gene implicated in colorectal cancer and gastrointestinal system cancer.
+
+```{r echo = F, fig.width=8}
+i=9
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##CG14229; Is expressed in organism.
+
+```{r echo = F, fig.width=8}
+i=10
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##CG15406; Predicted to enable transmembrane transporter activity. Predicted to be involved in transmembrane transport. Predicted to be active in membrane.
+
+```{r echo = F, fig.width=8}
+i=11
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##CG3270; Predicted to be involved in mitochondrial respiratory chain complex I assembly. Predicted to be active in cytoplasm. Is expressed in adult head. Human ortholog(s) of this gene implicated in nuclear type mitochondrial complex I deficiency 19. 
+
+```{r echo = F, fig.width=8}
+i=12
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##CG9877; Unknown function
+
+```{r echo = F, fig.width=8}
+i=13
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##CG13905; mat; materazzi; Enables lipid binding activity. Is expressed in adult head.
+
+```{r echo = F, fig.width=8}
+i=14
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##Zip71B; Zinc/iron regulated transporter-related protein 71B; Zinc/iron regulated transporter-related protein 71B (Zip71B) encodes a protein involved in zinc detoxification and zinc transmembrane import.
+
+```{r echo = F, fig.width=8}
+i=15
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##CG17027; Predicted to enable inositol monophosphate 1-phosphatase activity. Predicted to be involved in inositol metabolic process and signal transduction. Predicted to be located in cytoplasm. Is expressed in embryonic Malpighian tubule and embryonic proventriculus.
+
+```{r echo = F, fig.width=8}
+i=16
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##nom; numerous disordered muscles; Enables DNA binding activity. Involved in larval somatic muscle development. Predicted to be located in nucleus. Is expressed in embryonic/larval fat body; organism; and ring gland primordium. 
+
+```{r echo = F, fig.width=8}
+i=17
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##CG16727; Predicted to enable transmembrane transporter activity. Predicted to be involved in transmembrane transport. Predicted to be located in membrane. Orthologous to human SLC22A24
+
+```{r echo = F, fig.width=8}
+i=18
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+
+##CG9702; Predicted to enable sulfate transmembrane transporter activity. Predicted to be involved in transmembrane transport. Predicted to be located in membrane. Predicted to be active in plasma membrane. Is expressed in adult head. Orthologous to human SLC26A11
+
+```{r echo = F, fig.width=8}
+i=19
+FBgn = common.FBgn[i]
+name = paste0(common.FBgn[i], ": ", common.symbol[i])
+G85R.gene(FBgn, name)
+```
+
+##CG43740; Located in nucleoplasm. Is expressed in adult brain cell body rind. 
+
+
+##Looking for common Rescue response genes in Silent Male and Female
+```{r echo = F}
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1="Female Df"
+set2="Male Df"
+set3="Female OE"
+set4="Male OE"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1 = row.names(TKT.EdgeR[TKT.EdgeR$WTF.CxDf < .05, ])
+s2 = row.names(TKT.EdgeR[TKT.EdgeR$WTM.CxDf < .05, ])
+s3 = row.names(TKT.EdgeR[TKT.EdgeR$WTF.CxOE < .05, ])
+s4 = row.names(TKT.EdgeR[TKT.EdgeR$WTM.CxOE < .05, ])
+
+s1 = G85R.meancpm[s1, c('WT.F', 'TktDfWT.F')]
+s2 = G85R.meancpm[s2, c('WT.M', 'TktDfWT.M')]
+s3 = G85R.meancpm[s3, c('WT.F', 'TktOEWT.F')]
+s4 = G85R.meancpm[s4, c('WT.M', 'TktOEWT.M')]
+
+s1 = row.names(s1[apply(s1,1,max)>10,])
+s2 = row.names(s2[apply(s2,1,max)>10,])
+s3 = row.names(s3[apply(s3,1,max)>10,])
+s4 = row.names(s4[apply(s4,1,max)>10,])
+
+NormalResponse = data.frame(Rescue = c("FemaleDf", "MaleDf", "FemaleOE", "MaleOE"),
+                            TotalGenes =  c(length(s1), length(s2), length(s3), length(s4)))
+
+
+fig <- plot_ly(data = NormalResponse, x = ~Rescue, y = ~TotalGenes, type = 'bar', name = 'Normal Response',
+               marker = list(color = 'lightgrey',
+                      line = list(color = 'rgb(8,48,107)',
+                                  width = 3)))
+fig <- fig %>% layout(yaxis = list(title = 'Total Response Genes in Silent'))
+
+fig
+
+
+```
+
+
+```{r echo = F}
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1="Female Df"
+set2="Male Df"
+set3="Female OE"
+set4="Male OE"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1 = row.names(TKT.EdgeR[TKT.EdgeR$WTF.CxDf < .05, ])
+s2 = row.names(TKT.EdgeR[TKT.EdgeR$WTM.CxDf < .05, ])
+s3 = row.names(TKT.EdgeR[TKT.EdgeR$WTF.CxOE < .05, ])
+s4 = row.names(TKT.EdgeR[TKT.EdgeR$WTM.CxOE < .05, ])
+
+s1 = G85R.meancpm[s1, c('WT.F', 'TktDfWT.F')]
+s2 = G85R.meancpm[s2, c('WT.M', 'TktDfWT.M')]
+s3 = G85R.meancpm[s3, c('WT.F', 'TktOEWT.F')]
+s4 = G85R.meancpm[s4, c('WT.M', 'TktOEWT.M')]
+
+s1 = row.names(s1[apply(s1,1,max)>10,])
+s2 = row.names(s2[apply(s2,1,max)>10,])
+s3 = row.names(s3[apply(s3,1,max)>10,])
+s4 = row.names(s4[apply(s4,1,max)>10,])
+
+CF.Df = s1
+CM.Df = s2
+CF.OE = s3
+CM.OE = s4
+
+main = "Normal Response Genes"
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1, title = "main")
+
+```
+
+
+##Response Genes in Reversal Gene sets
+```{r echo = F}
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1="Female Df"
+set2="Male Df"
+set3="Female OE"
+set4="Male OE"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1 = intersect(female.Df.reverse$FBgn, CF.Df)
+s2 = intersect(male.Df.reverse$FBgn, CM.Df)
+s3 = intersect(female.OE.reverse$FBgn, CF.OE)
+s4 = intersect(male.OE.reverse$FBgn, CM.OE)
+
+main = "Reversal Genes in the Normal Response Genes"
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1, title = "main")
+
+```
+
+
+##Identifying reversal genes that are also sDEG in WT 'rescue' condition
+
+###Grey points should indicate a G85R-rescue FC similar to the obeserved FC in WT-rescue. Same direction and similar magnitude (within 50% of FC). Any genes that are sDEG in WT Rescue are in gold
+```{r echo = F}
+
+##comparisons
+x = "GRF.CxDf"
+y = "WTF.CxDf"
+
+mean.data = G85R.meancpm[, c('GR.F', 'TktDfGR.F',
+                             'WT.F', 'TktDfWT.F')]
+
+reversal.genes = female.Df.reverse$FBgn
+sWT = CF.Df
+
+FC.data = TKT.EdgeR.FC[reversal.genes, c(x, y)]
+FDR.data = TKT.EdgeR[reversal.genes, c(x, y)]
+mean.data = mean.data[reversal.genes, ]
+
+data = data.frame(Symbol = GeneIDKey[reversal.genes, "Symbol"],
+                  FBgn = reversal.genes,
+                  FDR1 = -log2(FDR.data[, x]),
+                  FDR2 = -log2(FDR.data[, y]),
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+
+  main.title = "Female TKT-Df Reversal Genes"
+  
+  data$Color[(data$FC1 - (.5*abs(data$FC1))) > data$FC2] = 'royalblue'
+  
+  data$Color[data$FC1 > 0 & data$FC2 < 0] = 'royalblue'
+  
+  data$Color[(data$FC1 + (.5*abs(data$FC1))) < data$FC2] = 'firebrick' 
+  data$Color[data$FC1 < 0 & data$FC2 > 0] = 'firebrick'
+  
+  data[intersect(data$FBgn, sWT), 'Color'] = 'gold'
+  size = data.frame(G85R = apply(mean.data[,c(1,3)], 1, mean),
+                    WT = mean.data[,c(2)])
+  size = size + .001
+  data$size = log2(apply(size, 1, max))
+  data$size[data$size<3] = 1
+  
+  data = na.omit(data)
+  data$size = 3*data$size
+
+  Conserved.Fdf = data
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+
+  fig
+```
+
+```{r echo = F}
+
+conserved = nrow(data[data$Color == 'grey',])
+pie(c((nrow(data)-conserved), conserved),
+    labels = c(paste0("G85R Specific  \nResponse Genes\n(", (nrow(data)-conserved), " genes, ", signif((100*(nrow(data)-conserved)/nrow(data)),1), "%)"),
+               "WT.DEGs", 
+               paste0('   Conserved\nResponse Genes\n  (', conserved, " genes, ",signif(100*conserved/nrow(data),1),"%)")),
+    col = c(rgb(158/255,202/255,225/255, .75), 'lightgrey'),
+    main = main.title)
+
+```
+
+
+```{r echo = F}
+
+##comparisons
+x = "GRM.CxDf"
+y = "WTM.CxDf"
+
+mean.data = G85R.meancpm[, c('GR.M', 'TktDfGR.M',
+                             'WT.M', 'TktDfWT.M')]
+
+reversal.genes = male.Df.reverse$FBgn
+sWT = CM.Df
+
+FC.data = TKT.EdgeR.FC[reversal.genes, c(x, y)]
+FDR.data = TKT.EdgeR[reversal.genes, c(x, y)]
+mean.data = mean.data[reversal.genes, ]
+
+data = data.frame(Symbol = GeneIDKey[reversal.genes, "Symbol"],
+                  FBgn = reversal.genes,
+                  FDR1 = -log2(FDR.data[, x]),
+                  FDR2 = -log2(FDR.data[, y]),
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+
+  main.title = "Male TKT-Df Reversal Genes"
+  
+  data$Color[(data$FC1 - (.5*abs(data$FC1))) > data$FC2] = 'royalblue'
+  
+  data$Color[data$FC1 > 0 & data$FC2 < 0] = 'royalblue'
+  
+  data$Color[(data$FC1 + (.5*abs(data$FC1))) < data$FC2] = 'firebrick' 
+  data$Color[data$FC1 < 0 & data$FC2 > 0] = 'firebrick'
+  
+  data[intersect(data$FBgn, sWT), 'Color'] = 'gold'
+  size = data.frame(G85R = apply(mean.data[,c(1,3)], 1, mean),
+                    WT = mean.data[,c(2)])
+  size = size + .001
+  data$size = log2(apply(size, 1, max))
+  data$size[data$size<3] = 1
+  
+  data = na.omit(data)
+  data$size = 3*data$size
+
+  Conserved.Mdf = data
+  
+fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+    
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         list(type = "line",
+                              layer = "below",
+                              line = list(color = "black", dash = 'dash', width = 2),
+                              x0 = min(data$FC1, data$FC2) - 1,
+                              x1 = max(data$FC1, data$FC2) + 1,
+                              y0 = min(data$FC1, data$FC2) - 1,
+                              y1 = max(data$FC1, data$FC2) + 1)),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+
+  fig
+```
+
+
+```{r echo = F}
+
+conserved = nrow(data[data$Color == 'grey',])
+
+pie(c((nrow(data)-conserved), conserved),
+    labels = c(paste0("G85R Specific  \nResponse Genes\n(", (nrow(data)-conserved), " genes, ", signif((100*(nrow(data)-conserved)/nrow(data)),1), "%)"), 
+               paste0('   Conserved\nResponse Genes\n  (', conserved, " genes, ",signif(100*conserved/nrow(data),1),"%)")),
+    col = c(rgb(158/255,202/255,225/255, .75), 'lightgrey'),
+    main = main.title)
+```
+
+
+```{r echo = F}
+
+##comparisons
+x = "GRF.CxOE"
+y = "WTF.CxOE"
+
+mean.data = G85R.meancpm[, c('GR.F', 'TktOEGR.F',
+                             'WT.F', 'TktOEWT.F')]
+
+reversal.genes = female.OE.reverse$FBgn
+sWT = CF.OE
+
+FC.data = TKT.EdgeR.FC[reversal.genes, c(x, y)]
+FDR.data = TKT.EdgeR[reversal.genes, c(x, y)]
+mean.data = mean.data[reversal.genes, ]
+
+data = data.frame(Symbol = GeneIDKey[reversal.genes, "Symbol"],
+                  FBgn = reversal.genes,
+                  FDR1 = -log2(FDR.data[, x]),
+                  FDR2 = -log2(FDR.data[, y]),
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+
+  main.title = "Female TKT-Df Reversal Genes"
+  
+  data$Color[(data$FC1 - (.5*abs(data$FC1))) > data$FC2] = 'royalblue'
+  
+  data$Color[data$FC1 > 0 & data$FC2 < 0] = 'royalblue'
+  
+  data$Color[(data$FC1 + (.5*abs(data$FC1))) < data$FC2] = 'firebrick' 
+  data$Color[data$FC1 < 0 & data$FC2 > 0] = 'firebrick'
+  
+  data[intersect(data$FBgn, sWT), 'Color'] = 'gold'
+  size = data.frame(G85R = apply(mean.data[,c(1,3)], 1, mean),
+                    WT = mean.data[,c(2)])
+  size = size + .001
+  data$size = log2(apply(size, 1, max))
+  data$size[data$size<3] = 1
+  
+  data = na.omit(data)
+  data$size = 3*data$size
+
+  Conserved.FOE = data
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+
+  fig
+```
+
+
+```{r echo = F}
+
+conserved = nrow(data[data$Color == 'grey',])
+
+pie(c((nrow(data)-conserved), conserved),
+    labels = c(paste0("G85R Specific  \nResponse Genes\n(", (nrow(data)-conserved), " genes, ", signif((100*(nrow(data)-conserved)/nrow(data)),1), "%)"), 
+               paste0('   Conserved\nResponse Genes\n  (', conserved, " genes, ",signif(100*conserved/nrow(data),1),"%)")),
+    col = c(rgb(158/255,202/255,225/255, .75), 'lightgrey'),
+    main = main.title)
+```
+
+
+```{r echo = F}
+
+##comparisons
+x = "GRM.CxOE"
+y = "WTM.CxOE"
+
+mean.data = G85R.meancpm[, c('GR.M', 'TktOEGR.M',
+                             'WT.M', 'TktOEWT.M')]
+
+reversal.genes = male.OE.reverse$FBgn
+sWT = CM.OE
+
+FC.data = TKT.EdgeR.FC[reversal.genes, c(x, y)]
+FDR.data = TKT.EdgeR[reversal.genes, c(x, y)]
+mean.data = mean.data[reversal.genes, ]
+
+data = data.frame(Symbol = GeneIDKey[reversal.genes, "Symbol"],
+                  FBgn = reversal.genes,
+                  FDR1 = -log2(FDR.data[, x]),
+                  FDR2 = -log2(FDR.data[, y]),
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+
+  main.title = "Male TKT-Df Reversal Genes"
+  
+  data$Color[(data$FC1 - (.5*abs(data$FC1))) > data$FC2] = 'royalblue'
+  
+  data$Color[data$FC1 > 0 & data$FC2 < 0] = 'royalblue'
+  
+  data$Color[(data$FC1 + (.5*abs(data$FC1))) < data$FC2] = 'firebrick' 
+  data$Color[data$FC1 < 0 & data$FC2 > 0] = 'firebrick'
+  
+  data[intersect(data$FBgn, sWT), 'Color'] = 'gold'
+  size = data.frame(G85R = apply(mean.data[,c(1,3)], 1, mean),
+                    WT = mean.data[,c(2)])
+  size = size + .001
+  data$size = log2(apply(size, 1, max))
+  data$size[data$size<3] = 1
+  
+  data = na.omit(data)
+  data$size = 3*data$size
+
+  Conserved.MOE = data
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+
+  fig
+```
+
+
+```{r echo = F}
+
+conserved = nrow(data[data$Color == 'grey',])
+
+pie(c((nrow(data)-conserved), conserved),
+    labels = c(paste0("G85R Specific  \nResponse Genes\n(", (nrow(data)-conserved), " genes, ", signif((100*(nrow(data)-conserved)/nrow(data)),1), "%)"), 
+               paste0('   Conserved\nResponse Genes\n  (', conserved, " genes, ",signif(100*conserved/nrow(data),1),"%)")),
+    col = c(rgb(158/255,202/255,225/255, .75), 'lightgrey'),
+    main = main.title)
+
+```
+
+
+```{r echo = F}
+
+response = data.frame(Rescue = c("FemaleDf", "MaleDf", "FemaleOE", "MaleOE"),
+                      NormalResponse =  c(nrow(Conserved.Fdf[Conserved.Fdf$Color == "grey",]),
+                                          nrow(Conserved.Mdf[Conserved.Mdf$Color == "grey",]),
+                                          nrow(Conserved.FOE[Conserved.FOE$Color == "grey",]),
+                                          nrow(Conserved.MOE[Conserved.MOE$Color == "grey",])),
+                      AlteredResponse = c(nrow(Conserved.Fdf[Conserved.Fdf$Color != "grey",]),
+                                          nrow(Conserved.Mdf[Conserved.Mdf$Color != "grey",]),
+                                          nrow(Conserved.FOE[Conserved.FOE$Color != "grey",]),
+                                          nrow(Conserved.MOE[Conserved.MOE$Color != "grey",])),
+                      WTResponse      = c(nrow(Conserved.Fdf[Conserved.Fdf$Color == "gold",]),
+                                          nrow(Conserved.Mdf[Conserved.Mdf$Color == "gold",]),
+                                          nrow(Conserved.FOE[Conserved.FOE$Color == "gold",]),
+                                          nrow(Conserved.MOE[Conserved.MOE$Color == "gold",])))
+
+fig <- plot_ly(data = response, x = ~Rescue, y = ~NormalResponse, type = 'bar', name = 'Normal Response',
+               marker = list(color = 'lightgrey',
+                      line = list(color = 'rgb(8,48,107)',
+                                  width = 3)))
+fig <- fig %>% add_trace(y = ~WTResponse, name = 'Silent DEG Response',
+               marker = list(color = 'gold'))
+fig <- fig %>% add_trace(y = ~AlteredResponse, name = 'Altered Response',
+               marker = list(color = 'rgb(158,202,225)'))
+fig <- fig %>% layout(yaxis = list(title = 'Total Reversal Response Genes'), barmode = 'stack')
+
+fig
+
+```
+
+
+```{r echo = F}
+
+response = data.frame(Rescue = c("FemaleDf", "MaleDf", "FemaleOE", "MaleOE"),
+                      NormalResponse =  c(nrow(Conserved.Fdf[Conserved.Fdf$Color == "grey",]),
+                                          nrow(Conserved.Mdf[Conserved.Mdf$Color == "grey",]),
+                                          nrow(Conserved.FOE[Conserved.FOE$Color == "grey",]),
+                                          nrow(Conserved.MOE[Conserved.MOE$Color == "grey",])),
+                      AlteredResponse = c(nrow(Conserved.Fdf[Conserved.Fdf$Color != "grey",]),
+                                          nrow(Conserved.Mdf[Conserved.Mdf$Color != "grey",]),
+                                          nrow(Conserved.FOE[Conserved.FOE$Color != "grey",]),
+                                          nrow(Conserved.MOE[Conserved.MOE$Color != "grey",])),
+                      WTResponse      = c(nrow(Conserved.Fdf[Conserved.Fdf$Color == "gold",]),
+                                          nrow(Conserved.Mdf[Conserved.Mdf$Color == "gold",]),
+                                          nrow(Conserved.FOE[Conserved.FOE$Color == "gold",]),
+                                          nrow(Conserved.MOE[Conserved.MOE$Color == "gold",])),
+                      TotalResponse =   c(nrow(Conserved.Fdf),
+                                          nrow(Conserved.Mdf),
+                                          nrow(Conserved.FOE),
+                                          nrow(Conserved.MOE)))
+
+percent.response = response
+percent.response$NormalResponse = 100*percent.response$NormalResponse/percent.response$TotalResponse
+percent.response$WTResponse = 100*percent.response$WTResponse/percent.response$TotalResponse
+percent.response$AlteredResponse = 100*percent.response$AlteredResponse/percent.response$TotalResponse
+fig <- plot_ly(data = percent.response, x = ~Rescue, y = ~NormalResponse, type = 'bar', name = 'Normal Response',
+               marker = list(color = 'lightgrey',
+                      line = list(color = 'rgb(8,48,107)',
+                                  width = 3)))
+fig <- fig %>% add_trace(y = ~WTResponse, name = 'Silent DEG Response',
+               marker = list(color = 'gold'))
+fig <- fig %>% add_trace(y = ~AlteredResponse, name = 'Altered Response',
+               marker = list(color = 'rgb(158,202,225)'))
+fig <- fig %>% layout(yaxis = list(title = 'Percent of Total Reversal Response Genes'), barmode = 'stack')
+
+fig
+
+```
+
+
+
+
+##Conserved Reversal Genes
+```{r echo = F}
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1="Female Df"
+set2="Male Df"
+set3="Female OE"
+set4="Male OE"
+
+
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1 = row.names(Conserved.Fdf[Conserved.Fdf$Color == "grey",])
+s2 = row.names(Conserved.Mdf[Conserved.Mdf$Color == "grey",])
+s3 = row.names(Conserved.FOE[Conserved.FOE$Color == "grey",])
+s4 = row.names(Conserved.MOE[Conserved.MOE$Color == "grey",])
+
+main = "Conserved Reversal Genes"
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1, title = "main")
+
+```
+
+
