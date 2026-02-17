@@ -1,0 +1,3476 @@
+---
+title: "Russo Fig1 Replots"
+author: "John Santiago"
+date: "2025-03-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r echo = F}
+
+library(kableExtra)
+
+std.colors = setNames(c('navy', "gold2", "turquoise4", "royalblue",
+                        'orange', "deeppink", "grey", "green4"),
+                      c("w1118", "WT(LoxP)", "G85R(hr)", "WT(cr)",
+                        "G85R(cr)", "A4V", "A4V/X16", "A4V/G85R(cr)"))
+
+hex = function(color, alpha){
+  rgb2hex = color
+  i = 1
+  while(i <= length(color)){
+    rgbvals = col2rgb(color[i])
+    rgb2hex[i] = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+    i = i+1
+  }
+  return(rgb2hex)
+}
+
+```
+
+
+```{r echo = F}
+
+B = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Russo Fig 1 eclosion.csv")
+B.labels = c("w1118",
+             "WT(LoxP)", "G85R(hr)",
+             "WT(cr)", "G85R(cr)",
+             "G85R(cr)/Sod1null", "WT(cr)/Sod1null", "Sod1null", 
+             "A4V", "A4V/Sod1null","A4V/X16", "A4V/G85R(cr)")
+              
+colnames(B) = B.labels
+
+mean.B = setNames(rep(0, ncol(B)), colnames(B))
+i=1
+while(i<=ncol(B)){
+  mean.B[i] = mean(na.omit(B[,i]))
+  i=i+1
+}
+
+
+```
+
+```{r echo = F, fig.width=10, fig.height=7}
+
+par(mar = c(9,4,4,2))
+
+barplot(height = mean.B,
+        ylim = c(0, 120),
+        col = "black",
+        las = 2,
+        ylab = "Eclosion frequency (%)",
+        main = "Eclosion from the pupal case",
+        xaxt = "n",
+        yaxt = "n")
+axis(side = 1,
+     at = c(.7 + (c(0:11)*1.2)),
+     lwd = 3,
+     line = 0,
+     labels = B.labels,
+     xpd = T,
+     las = 2)
+axis(side = 2,
+     at = c(0,20,40,60,80,100),
+     lwd = 3,
+     line = 0,
+     labels = T,
+     xpd = T,
+     las = 2)
+
+lines(x = c(-0.5,13.5),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+
+lines(x = c(1.9,3.1),
+      y = c(105, 105),
+      lwd = 3)
+
+lines(x = c(1.9,1.9),
+      y = c(105, 102),
+      lwd = 3)
+lines(x = c(3.1, 3.1),
+      y = c(105, 40),
+      lwd = 3)
+
+text(x = 3.1,
+     y = 109,
+    labels = "*",
+    cex = 2)
+
+
+lines(x = c(4.3,9.1),
+      y = c(105, 105),
+      lwd = 3)
+
+lines(x = c(4.3,4.3),
+      y = c(105, 102),
+      lwd = 3)
+lines(x = c(5.5, 5.5),
+      y = c(105, 40),
+      lwd = 3)
+lines(x = c(6.7, 6.7),
+      y = c(105, 95),
+      lwd = 3)
+lines(x = c(9.1, 9.1),
+      y = c(105, 95),
+      lwd = 3)
+
+text(x = 5.5,
+     y = 109,
+    labels = "*",
+    cex = 2)
+
+
+lines(x = c(5.5,11.5),
+      y = c(116, 116),
+      lwd = 3)
+
+lines(x = c(5.5, 5.5),
+      y = c(116, 113),
+      lwd = 3)
+lines(x = c(10.3, 10.3),
+      y = c(116, 100),
+      lwd = 3)
+lines(x = c(11.5, 11.5),
+      y = c(116, 102),
+      lwd = 3)
+
+
+text(x = 10.3,
+     y = 120,
+    labels = "*",
+    cex = 2,
+    xpd = t)
+
+
+```
+
+```{r echo = F, include = F}
+
+#B.data = data.frame(Genotype = rep(B.labels[1], length(na.omit(B[,1]))),
+#                    Eclosion = na.omit(B[,1]))
+
+#i = 1
+#while(i <= ncol(B)){
+#  temp.B = data.frame(Genotype = rep(B.labels[i], length(na.omit(B[,i]))),
+#                      Eclosion = na.omit(B[,i]))
+#  B.data = rbind(B.data, temp.B)
+#  i = i+1
+#}
+
+#B.aov = aov(B.data$Eclosion~B.data$Genotype)
+
+#head(summary(B.aov))
+
+#head(TukeyHSD(B.aov))
+
+t.table = data.frame(Genotype1 = B.labels[1],
+                     Genotype2 = B.labels[2],
+                     pval = t.test(x = na.omit(B[,1]),
+                                   y = na.omit(B[,2]),
+                                   paired = F)[[3]])
+
+i=1
+while(i <= ncol(B)){
+  j = i+1
+  while(j <= ncol(B)){
+    if(length(unique(na.omit(B[,i]))) == 1 &
+       length(unique(na.omit(B[,j]))) == 1){
+      t.temp = data.frame(Genotype1 = B.labels[i],
+                          Genotype2 = B.labels[j],
+                          pval = 0)
+      j = j+1
+    }
+    
+    if(!(length(unique(na.omit(B[,i]))) == 1 &
+         length(unique(na.omit(B[,j]))) == 1)){
+      t.temp = data.frame(Genotype1 = B.labels[i],
+                          Genotype2 = B.labels[j],
+                          pval = t.test(x = na.omit(B[,i]),
+                                        y = na.omit(B[,j]),
+                                        paired = F)[[3]])
+      t.table = rbind(t.table, t.temp)
+      j = j+1
+    }
+  }
+  i = i+1
+}
+
+
+t.stripe = t.table$pval <= .05
+#row.names(t.table) = c(1:nrow(t.table))
+
+knitr::kable(t.table,
+             caption = 'All t-tests for figure 1B eclosion data.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", background = "gold")
+
+```
+
+
+```{r echo = F}
+
+target.pvals = t.table[c(13, 30, 34, 38, 40, 55, 59),]
+
+knitr::kable(target.pvals,
+             caption = 'All t-tests for figure 1B eclosion data.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(target.pvals))[target.pvals$pval <= .05], bold = T, color = "black", background = "gold")
+
+```
+
+
+```{r echo = F}
+
+C = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 1C pharate_bouton_counts.xlsx - counts.csv")
+
+W1118 = data.frame(Genotype = "W1118",
+                   Boutons = na.omit(C$W1118),
+                   x = 1)
+W1118 = W1118[order(W1118$Boutons),]
+W1118$x[c(3)] = .85
+W1118$x[c(4)] = 1.15
+
+
+SILENT = data.frame(Genotype = "SILENT",
+                   Boutons = na.omit(C$SILENT),
+                   x = 2)
+SILENT = SILENT[order(SILENT$Boutons),]
+SILENT$x[c(3)] = 1.85
+SILENT$x[c(4)] = 2.15
+
+G85Rcr = data.frame(Genotype = "G85Rcr",
+                   Boutons = na.omit(C$G85Rcr),
+                   x = 3)
+G85Rcr = G85Rcr[order(G85Rcr$Boutons),]
+G85Rcr$x[c(4,10)] = 2.875
+G85Rcr$x[c(5,9)] = 3.125
+G85Rcr$x[c(1)] = 2.925
+G85Rcr$x[c(2)] = 3.075
+G85Rcr$x[c(6)] = 2.75
+G85Rcr$x[c(7)] = 3.25
+
+A4V = data.frame(Genotype = "A4V",
+                   Boutons = na.omit(C$A4V),
+                   x = 4)
+A4V = A4V[order(A4V$Boutons),]
+A4V$x[c(4, 8)] = 3.875
+A4V$x[c(5, 9)] = 4.125
+A4V$x[c(6)] = 3.75
+A4V$x[c(7)] = 4.25
+A4V$x[c(1)] = 3.925
+A4V$x[c(2)] = 4.075
+
+
+C = rbind(W1118, rbind(SILENT,
+                       rbind(G85Rcr, A4V)))
+
+C$Genotype = factor(C$Genotype, levels = c("W1118", "SILENT", "G85Rcr", "A4V"))
+
+C.labels = c("w1118", "WT(cr)", "G85R(cr)", "A4V")
+C.cols = std.colors[C.labels]
+     
+```
+
+```{r echo = F, fig.width=10, fig.height=7}
+ 
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(0, 150),
+     xlim = c(.5, 4.5),
+     xaxt = "n",
+     ylab="Bouton Number",
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = "Pharate muscle VM NMJ bouton counts")
+      
+boxplot(C$Boutons~C$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(0, 150),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(C.cols, .25),
+        add = T, 
+        xaxt = "n",
+        frame = F)
+
+
+points(x=as.numeric(C$x),
+       y=C$Boutons,
+       cex=2.25,
+       pch=21,
+       bg=C.cols[C$Genotype])
+      
+axis(side = 1,
+     at = c(1:4),
+     lwd = 3,
+     line = -.9,
+     labels = C.labels,
+     xpd = T)
+
+
+axis(side = 2,
+     at = c(0, 50, 100, 150),
+     lwd = 3,
+     line = 0,
+     labels = F,
+     xpd = T)
+
+lines(x = c(0.35,4.5),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+lines(x = c(1, 4),
+     y = c(140,140),
+     lwd = 3)
+
+lines(x = c(3, 3),
+     y = c(60,140),
+     lwd = 3)
+
+lines(x = c(1, 1),
+     y = c(120,140),
+     lwd = 3)
+
+lines(x = c(2, 2),
+     y = c(120,140),
+     lwd = 3)
+
+lines(x = c(4, 4),
+     y = c(120,140),
+     lwd = 3)
+
+text(x = 3,
+     y = 145,
+    labels = "*",
+    cex = 2)
+
+
+```
+
+
+```{r echo = F}
+
+D = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 1D NMJ_quantification_larva.csv")
+
+w1118 = data.frame(Genotype = "w1118",
+                   Boutons = na.omit(D$w1118),
+                   x = 1)
+w1118 = w1118[order(w1118$Boutons),]
+w1118$x[c(3, 8, 15)] = .85
+w1118$x[c(4, 9, 16)] = 1.15
+w1118$x[c(5, 10, 13)] = .7
+w1118$x[c(6, 11, 14)] = 1.3
+
+
+LoxP = data.frame(Genotype = "LoxP",
+                   Boutons = na.omit(D$LoxP),
+                   x = 2)
+LoxP = LoxP[order(LoxP$Boutons),]
+LoxP$x[c(3)] = 1.85
+LoxP$x[c(4)] = 2.15
+LoxP$x[c(5)] = 1.7
+LoxP$x[c(6)] = 2.3
+
+G85R_HR = data.frame(Genotype = "G85R_HR",
+                   Boutons = na.omit(D$G85R_HR),
+                   x = 3)
+G85R_HR = G85R_HR[order(G85R_HR$Boutons),]
+G85R_HR$x[c(2, 5, 12)] = 2.85
+G85R_HR$x[c(3, 6, 13)] = 3.15
+G85R_HR$x[c(7, 10)] = 2.7
+G85R_HR$x[c(8, 11)] = 3.3
+
+silent = data.frame(Genotype = "silent",
+                   Boutons = na.omit(D$silent),
+                   x = 4)
+silent = silent[order(silent$Boutons),]
+silent$x[c(2, 5, 12, 14, 16)] = 3.85
+silent$x[c(3, 6, 11, 15, 17)] = 4.15
+silent$x[c(7, 10)] = 3.7
+silent$x[c(8, 9)] = 4.3
+
+G85R_WG = data.frame(Genotype = "G85R_WG",
+                   Boutons = na.omit(D$G85R_WG),
+                   x = 5)
+G85R_WG = G85R_WG[order(G85R_WG$Boutons),]
+G85R_WG$x[c(2)] = 4.85
+G85R_WG$x[c(3)] = 5.15
+G85R_WG$x[c(4)] = 4.7
+G85R_WG$x[c(5)] = 5.3
+
+A4V = data.frame(Genotype = "A4V",
+                   Boutons = na.omit(D$A4V),
+                   x = 6)
+A4V = A4V[order(A4V$Boutons),]
+A4V$x[c(1, 3)] = 5.85
+A4V$x[c(2, 4)] = 6.15
+
+
+D = rbind(w1118, rbind(LoxP,
+    rbind(G85R_HR, 
+    rbind(silent,
+    rbind(G85R_WG, A4V)))))
+
+D$Genotype = factor(D$Genotype, levels = c("w1118", "LoxP", "G85R_HR", "silent", "G85R_WG", "A4V"))
+
+
+D.labels = c("w1118", "WT(LoxP)", "G85R(hr)", "WT(cr)", "G85R(cr)", "A4V")
+
+D.cols = std.colors[D.labels]
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=7}
+ 
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(0, 150),
+     xlim = c(.5, 6.5),
+     xaxt = "n",
+     ylab="Bouton Number",
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = "Larval muscle 6/7 NMJ bouton counts")
+      
+boxplot(D$Boutons~D$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(0, 150),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(D.cols, .25),
+        add = T, 
+        xaxt = "n",
+        frame = F)
+
+
+points(x=as.numeric(D$x),
+       y=D$Boutons,
+       cex=2.25,
+       pch=21,
+       bg=D.cols[D$Genotype])
+      
+axis(side = 1,
+     at = c(1:6),
+     lwd = 3,
+     line = -.9,
+     labels = D.labels,
+     xpd = T)
+
+
+axis(side = 2,
+     at = c(0, 50, 100, 150),
+     lwd = 3,
+     line = 0,
+     labels = F,
+     xpd = T)
+
+lines(x = c(0.25,6.5),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=7, include = F}
+
+E = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 1E LarvalLocomotion.csv")
+
+E = E[c("w1118", "WTLoxP.WTLoxP", "G85R.G85R.HR.", "WT.WT",
+        "G85R.G85R.CR.", "A4V.A4V",
+        "A4V.X16", "A4V.G85R.CR.")]
+
+E.labels = c("w1118", "WT(LoxP)", "G85R(hr)", "WT(cr)", "G85R(cr)", 
+             "A4V", "A4V/X16", "A4V/G85R(cr)")
+
+E.cols = std.colors[E.labels]
+
+n.E = setNames(rep(0, ncol(E)), colnames(E))
+mean.E = n.E
+sd.E = n.E
+
+i=1
+while(i<= ncol(E)){
+  mean.E[i] = mean(na.omit(E[,i]))
+  sd.E[i] = sd(na.omit(E[,i]))
+  n.E[i] = (length(na.omit(E[,i])))
+  i=i+1
+}
+
+stderr.E = sd.E/(sqrt(n.E))
+
+bar.colors = hex(E.cols, .75)
+
+border.colors = E.cols
+
+tick.x = c(.7 + (c(0:7)*1.2))
+
+par(mar = c(8,4,4,2), lwd = 3)
+
+barplot(height = mean.E,
+        ylim = c(0, 80),
+        col = border.colors,
+        las = 2,
+        ylab = "Distance traveled (mm)",
+        main = "Larval locomotion",
+        border = border.colors,
+        xaxt = "n")
+
+axis(side = 1,
+     at = tick.x,
+     lwd = 3,
+     line = 0,
+     labels = E.labels,
+     xpd = T)
+
+axis(side = 2,
+     at = c(0,20,40,60,80),
+     lwd = 3,
+     line = 0,
+     labels = F,
+     xpd = T)
+lines(x = c(-0.2,13.5),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+i = 1
+while(i <= length(stderr.E)){
+  lines(x = tick.x[c(i,i)],
+        y = c(mean.E[i], (mean.E[i] + stderr.E[i])),
+        lwd = 3,
+        col = border.colors[i])
+  
+  lines(x = c((tick.x[i] - .25), (tick.x[i] + .25)),
+        y = c((mean.E[i] + stderr.E[i]), (mean.E[i] + stderr.E[i])),
+        lwd = 3,
+        col = border.colors[i])
+  
+  i = i +1
+}
+
+
+lines(x = c(1.9,3.1),
+      y = c(63, 63),
+      lwd = 3)
+
+text(x = 2.5,
+     y = 66,
+    labels = "*",
+    cex = 2,
+    xpd = t)
+
+```
+
+
+
+
+```{r echo = F, include = F}
+
+colnames(E) = E.labels
+
+t.fE = data.frame(Sample1 = character(),
+                  Sample2 = character(),
+                  pval = numeric())
+
+i = 1
+while(i <= length(E.labels)){
+  j = i+1
+  while(j <= length(E.labels)){
+      temp.t.fE = data.frame(Sample1 = E.labels[i],
+                       Sample2 = E.labels[j],
+                       pval = t.test(x = E[, E.labels[i]],
+                                     y = E[, E.labels[j]],
+                                     paired = F)[[3]])
+      t.fE = rbind(t.fE, temp.t.fE)
+      j = j+1
+  }
+
+  i = i+1
+}
+
+knitr::kable(t.fE,
+             caption = 'All t-tests for figure 1E larval locomotion data.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(t.fE))[t.fE$pval <= .05], bold = T, color = "black", background = "gold")
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=7, include = F}
+
+E = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 1E LarvalLocomotion.csv")
+
+E = E[c("w1118", "WTLoxP.WTLoxP", "G85R.G85R.HR.", "WT.WT",
+        "G85R.G85R.CR.", "A4V.A4V",
+        "A4V.X16", "A4V.G85R.CR.")]
+
+E.labels = c("w1118", "WT(LoxP)", "G85R(hr)", "WT(cr)", "G85R(cr)", 
+             "A4V", "A4V/X16", "A4V/G85R(cr)")
+
+E.cols = std.colors[E.labels]
+
+n.E = setNames(rep(0, ncol(E)), colnames(E))
+mean.E = n.E
+sd.E = n.E
+
+i=1
+while(i<= ncol(E)){
+  mean.E[i] = mean(na.omit(E[,i]))
+  sd.E[i] = sd(na.omit(E[,i]))
+  n.E[i] = (length(na.omit(E[,i])))
+  i=i+1
+}
+
+stderr.E = sd.E/(sqrt(n.E))
+
+bar.colors = hex(E.cols, .75)
+
+border.colors = E.cols
+
+tick.x = c(.7 + (c(0:7)*1.2))
+
+par(mar = c(8,4,4,2), lwd = 3)
+
+barplot(height = mean.E,
+        ylim = c(0, 80),
+        col = border.colors,
+        las = 2,
+        ylab = "Distance traveled (mm)",
+        main = "Larval locomotion",
+        border = border.colors,
+        xaxt = "n")
+
+axis(side = 1,
+     at = tick.x,
+     lwd = 3,
+     line = 0,
+     labels = E.labels,
+     xpd = T)
+
+axis(side = 2,
+     at = c(0,20,40,60,80),
+     lwd = 3,
+     line = 0,
+     labels = F,
+     xpd = T)
+lines(x = c(-0.2,13.5),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+i = 1
+while(i <= length(stderr.E)){
+  lines(x = tick.x[c(i,i)],
+        y = c(mean.E[i], (mean.E[i] + stderr.E[i])),
+        lwd = 3,
+        col = border.colors[i])
+  
+  lines(x = c((tick.x[i] - .25), (tick.x[i] + .25)),
+        y = c((mean.E[i] + stderr.E[i]), (mean.E[i] + stderr.E[i])),
+        lwd = 3,
+        col = border.colors[i])
+  
+  i = i +1
+}
+
+
+lines(x = c(1.9,3.1),
+      y = c(63, 63),
+      lwd = 3)
+
+text(x = 2.5,
+     y = 66,
+    labels = "*",
+    cex = 2,
+    xpd = t)
+
+```
+
+
+
+
+```{r echo = F, include = F}
+
+colnames(E) = E.labels
+
+t.fE = data.frame(Sample1 = character(),
+                  Sample2 = character(),
+                  pval = numeric())
+
+i = 1
+while(i <= length(E.labels)){
+  j = i+1
+  while(j <= length(E.labels)){
+      temp.t.fE = data.frame(Sample1 = E.labels[i],
+                       Sample2 = E.labels[j],
+                       pval = t.test(x = E[, E.labels[i]],
+                                     y = E[, E.labels[j]],
+                                     paired = F)[[3]])
+      t.fE = rbind(t.fE, temp.t.fE)
+      j = j+1
+  }
+
+  i = i+1
+}
+
+knitr::kable(t.fE,
+             caption = 'All t-tests for figure 1E larval locomotion data.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(t.fE))[t.fE$pval <= .05], bold = T, color = "black", background = "gold")
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=7}
+
+E = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 1E LarvalLocomotion.csv")
+
+E = E[c("w1118", "WTLoxP.WTLoxP", "G85R.G85R.HR.", "WT.WT",
+        "G85R.G85R.CR.", "A4V.A4V",
+        "A4V.X16", "A4V.G85R.CR.")]
+
+E = E[, c("WTLoxP.WTLoxP", "G85R.G85R.HR.", "WT.WT",
+        "G85R.G85R.CR.", "A4V.A4V")]
+
+E.labels = c("WT(LoxP)", 
+             "G85R(hr)", "WT(cr)", "G85R(cr)", 
+             "A4V")
+
+E.cols = std.colors[E.labels]
+
+
+
+
+n.E = setNames(rep(0, ncol(E)), colnames(E))
+mean.E = n.E
+sd.E = n.E
+
+i=1
+while(i<= ncol(E)){
+  mean.E[i] = mean(na.omit(E[,i]))
+  sd.E[i] = sd(na.omit(E[,i]))
+  n.E[i] = (length(na.omit(E[,i])))
+  i=i+1
+}
+
+stderr.E = sd.E/(sqrt(n.E))
+
+bar.colors = hex(E.cols, .75)
+
+border.colors = E.cols
+
+tick.x = c(.7 + (c(0:4)*1.2))
+
+par(mar = c(8,4,4,2), lwd = 3)
+
+barplot(height = mean.E,
+        ylim = c(0, 80),
+        col = border.colors,
+        las = 2,
+        ylab = "Distance traveled (mm)",
+        main = "Larval locomotion",
+        border = border.colors,
+        xaxt = "n")
+
+axis(side = 1,
+     at = tick.x,
+     lwd = 3,
+     line = 0,
+     labels = E.labels,
+     xpd = T)
+
+axis(side = 2,
+     at = c(0,20,40,60,80),
+     lwd = 3,
+     line = 0,
+     labels = F,
+     xpd = T)
+lines(x = c(-0.05,6.2),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+i = 1
+while(i <= length(stderr.E)){
+  lines(x = tick.x[c(i,i)],
+        y = c(mean.E[i], (mean.E[i] + stderr.E[i])),
+        lwd = 3,
+        col = border.colors[i])
+  
+  lines(x = c((tick.x[i] - .25), (tick.x[i] + .25)),
+        y = c((mean.E[i] + stderr.E[i]), (mean.E[i] + stderr.E[i])),
+        lwd = 3,
+        col = border.colors[i])
+  
+  i = i +1
+}
+
+
+lines(x = c(.7,1.9),
+      y = c(66, 66),
+      lwd = 3)
+
+text(x = 1.3,
+     y = 69,
+    labels = "*",
+    cex = 2,
+    xpd = t)
+
+```
+
+
+
+
+```{r echo = F, }
+
+colnames(E) = E.labels
+
+t.fE = data.frame(Sample1 = character(),
+                  Sample2 = character(),
+                  pval = numeric())
+
+i = 1
+while(i <= length(E.labels)){
+  j = i+1
+  while(j <= length(E.labels)){
+      temp.t.fE = data.frame(Sample1 = E.labels[i],
+                       Sample2 = E.labels[j],
+                       pval = t.test(x = E[, E.labels[i]],
+                                     y = E[, E.labels[j]],
+                                     paired = F)[[3]])
+      t.fE = rbind(t.fE, temp.t.fE)
+      j = j+1
+  }
+
+  i = i+1
+}
+
+knitr::kable(t.fE,
+             caption = 'All t-tests for figure 1E larval locomotion data.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(t.fE))[t.fE$pval <= .05], bold = T, color = "black", background = "gold")
+
+```
+
+```{r include = F, echo = F, include = F}
+
+fig2ab = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 2AB.csv", header = T)
+fig2ab$Sample = paste(fig2ab$Genotype, paste(fig2ab$Sex, fig2ab$Day))
+
+
+fig2ab$Genotype[fig2ab$Genotype == "dSodWT"] = "WT(cr)"
+
+```
+
+
+```{r echo = F, fig.width=7.5}
+
+f.fig2ab = fig2ab[fig2ab$Sex == 'F' &
+                 (fig2ab$Day == 3 |
+                  fig2ab$Day == 10 |
+                  fig2ab$Day == 22 |
+                  fig2ab$Day == 28 |
+                  fig2ab$Day == 35) &
+                  fig2ab$Genotype != 'w1118',]
+
+
+
+
+f.fig2ab = f.fig2ab[order(fig2ab$Day),]
+f.fig2ab$Sample = paste(f.fig2ab$Genotype, f.fig2ab$Day)
+f.fig2ab$Sample = factor(f.fig2ab$Sample, levels = c('WT(cr) 3', 'A4V 3',
+                                                     'WT(cr) 10', 'A4V 10',
+                                                     'WT(cr) 22', 'A4V 22',
+                                                     'WT(cr) 28', 'A4V 28',
+                                                     'WT(cr) 35', 'A4V 35'))
+f.fig2ab = na.omit(f.fig2ab)
+f.fig2ab$x = as.numeric(f.fig2ab$Sample)
+
+##put space between time points
+f.fig2ab$x[f.fig2ab$x > 8] = f.fig2ab$x[f.fig2ab$x > 8] + 1
+f.fig2ab$x[f.fig2ab$x > 6] = f.fig2ab$x[f.fig2ab$x > 6] + 1
+f.fig2ab$x[f.fig2ab$x > 4] = f.fig2ab$x[f.fig2ab$x > 4] + 1
+f.fig2ab$x[f.fig2ab$x > 2] = f.fig2ab$x[f.fig2ab$x > 2] + 1
+
+f2ab.cols = std.colors[c("WT(cr)", "A4V")]
+
+f.fig2ab$color = std.colors[f.fig2ab$Genotype]
+
+f.fig2ab = f.fig2ab[order(f.fig2ab$Rate),]
+f.fig2ab = f.fig2ab[order(f.fig2ab$Sample),]
+f.fig2ab$x.adj = rep(c(-.25, .25 ,0), 20)
+f.fig2ab$x.adj = c(0, -.25, .25, -.15, .15, 0,
+                   0, -.15, .15, -.15, .15, 0,
+                   
+                   0, 0, .2, -.2, 0, 0,
+                   -.15, .15, 0, 0, -.15, .15,
+                   
+                   0, 0, -.15, .15, 0, 0,
+                   0, 0, -.25, .25, 0, 0,
+                   
+                   0, -.25, .25, 0, 0, 0,
+                   -.15, .15, 0, 0, 0, 0,
+                   
+                   0, -.25, .25, -.15, .15, 0,
+                   -.25, .25, 0, -.25, .25, 0)
+
+f.fig2ab$x = f.fig2ab$x + f.fig2ab$x.adj
+
+```
+
+
+```{r echo = F}
+
+par(mar=c(5.1, 4.1, 4.1, 5.6))
+
+boxplot(f.fig2ab$Rate~f.fig2ab$Sample,
+        at = c(1,2, 4,5, 7,8, 10,11, 13,14),
+        xaxt = 'none',
+        xlab = "Day",
+        col = hex(f2ab.cols, .25),
+        ylab = 'Veloxicty (cm/sec)',
+        main = "Female Climbing Velocity",
+        ylim = c(0,2.7))
+points(x = f.fig2ab$x,
+       y = f.fig2ab$Rate,
+       pch = 21,
+       bg = f.fig2ab$color)
+axis(side = 1,
+     at = c(1.5, 4.5, 7.5, 10.5, 13.5),
+     labels = c(3, 10, 22, 28, 35))
+
+legend('topright',
+       inset=c(-0.185,0),
+       legend = c('WT(cr)', 'A4V'), 
+       fill = f2ab.cols,
+       cex = 1,
+       bty = 'n',
+       pt.cex = .5,
+       xpd = T)
+
+lines(x = c(1,2),
+      y = c(1.6, 1.6),
+      lwd = 1.5)
+
+text(x = 1.5,
+     y = 1.7,
+    labels = "*",
+    cex = 1.5,
+    xpd = t)
+
+lines(x = c(4,5),
+      y = c(2.4, 2.4),
+      lwd = 1.5)
+
+text(x = 4.5,
+     y = 2.5,
+    labels = "*",
+    cex = 1.5,
+    xpd = t)
+
+lines(x = c(10,11),
+      y = c(1.4, 1.4),
+      lwd = 1.5)
+
+text(x = 10.5,
+     y = 1.5,
+    labels = "*",
+    cex = 1.5,
+    xpd = t)
+
+lines(x = c(13,14),
+      y = c(1.0, 1.0),
+      lwd = 1.5)
+
+text(x = 13.5,
+     y = 1.1,
+    labels = "*",
+    cex = 1.5,
+    xpd = t)
+
+```
+
+
+```{r echo = F}
+
+f2ab.labels = unique(f.fig2ab$Sample)
+t.f2ab = data.frame(Sample1 = f2ab.labels[1],
+                    Sample2 = f2ab.labels[2],
+                    pval = t.test(x = f.fig2ab[f.fig2ab$Sample == f2ab.labels[1], "Rate"],
+                                  y = f.fig2ab[f.fig2ab$Sample == f2ab.labels[2], "Rate"],
+                                  paired = F)[[3]])
+
+i=3
+while(i<=length(unique(f.fig2ab$Sample))){
+  temp = data.frame(Sample1 = f2ab.labels[i],
+                    Sample2 = f2ab.labels[i+1],
+                    pval = t.test(x = f.fig2ab[f.fig2ab$Sample == f2ab.labels[i], "Rate"],
+                                  y = f.fig2ab[f.fig2ab$Sample == f2ab.labels[i+1], "Rate"],
+                                  paired = F)[[3]])
+  t.f2ab = rbind(t.f2ab, temp)
+  i=i+2
+}
+
+
+knitr::kable(t.f2ab,
+             caption = 'All t-tests for figure 2a climbing data.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(t.f2ab))[t.f2ab$pval <= .05], bold = T, color = "black", background = "gold")
+
+
+```
+
+
+```{r echo = F, fig.width=7.5}
+
+m.fig2ab = fig2ab[fig2ab$Sex == 'M' &
+                 (fig2ab$Day == 3 |
+                  fig2ab$Day == 7 |
+                  fig2ab$Day == 10 |
+                  fig2ab$Day == 14) &
+                  fig2ab$Genotype != 'w1118',]
+
+m.fig2ab = m.fig2ab[order(fig2ab$Day),]
+m.fig2ab$Sample = paste(m.fig2ab$Genotype, m.fig2ab$Day)
+m.fig2ab$Sample = factor(m.fig2ab$Sample, levels = c('WT(cr) 3', 'A4V 3',
+                                                     'WT(cr) 7', 'A4V 7',
+                                                     'WT(cr) 10', 'A4V 10',
+                                                     'WT(cr) 14', 'A4V 14'))
+m.fig2ab = na.omit(m.fig2ab)
+m.fig2ab$x = as.numeric(m.fig2ab$Sample)
+m.fig2ab$x[m.fig2ab$x > 6] = m.fig2ab$x[m.fig2ab$x > 6] + 1
+m.fig2ab$x[m.fig2ab$x > 4] = m.fig2ab$x[m.fig2ab$x > 4] + 1
+m.fig2ab$x[m.fig2ab$x > 2] = m.fig2ab$x[m.fig2ab$x > 2] + 1
+
+m2ab.cols = std.colors[c("WT(cr)", "A4V")]
+
+m.fig2ab$color = std.colors[m.fig2ab$Genotype]
+
+m.fig2ab = m.fig2ab[order(m.fig2ab$Rate),]
+m.fig2ab = m.fig2ab[order(m.fig2ab$Sample),]
+m.fig2ab$x.adj = rep(c(-.25, .25 ,0), 16)
+m.fig2ab$x.adj = c(0, -.25, .25, 0, -.1, .1,
+                   0, -.25, .25, .0, -.1, .1,
+                   
+                   0, 0, -.1, .1, 0, 0,
+                   0, -.1, .1, 0, 0, 0,
+                   
+                   0, -.1, .1, 0, 0, 0,
+                   0, -.1, .1, 0, -.1, .1,
+                   
+                   0, -.25, 0, .25, .15, 0,
+                   0, -.25, 0, .25, -.15, .15)
+
+m.fig2ab$x = m.fig2ab$x + m.fig2ab$x.adj
+
+```
+
+
+```{r echo = F}
+
+par(mar=c(5.1, 4.1, 4.1, 5.6))
+
+boxplot(m.fig2ab$Rate~m.fig2ab$Sample,
+        at = c(1,2, 4,5, 7,8, 10,11),
+        xaxt = 'none',
+        xlab = "Day",
+        col = hex(m2ab.cols, .25),
+        ylab = 'Veloxicty (cm/sec)',
+        main = "Male Climbing Velocity",
+        ylim = c(0,2.7))
+points(x = m.fig2ab$x,
+       y = m.fig2ab$Rate,
+       pch = 21,
+       bg = m.fig2ab$color)
+axis(side = 1,
+     at = c(1.5, 4.5, 7.5, 10.5),
+     labels = c(3, 7, 10, 14))
+
+legend('topright',
+       inset=c(-0.215,0),
+       legend = c('WT(cr)', 'A4V'), 
+       fill = m2ab.cols,
+       cex = 1,
+       bty = 'n',
+       pt.cex = .5,
+       xpd = T)
+
+lines(x = c(7,8),
+      y = c(2.4, 2.4),
+      lwd = 1.5)
+
+text(x = 7.5,
+     y = 2.5,
+    labels = "*",
+    cex = 1.5,
+    xpd = t)
+
+lines(x = c(10,11),
+      y = c(2.2, 2.2),
+      lwd = 1.5)
+
+text(x = 10.5,
+     y = 2.3,
+    labels = "*",
+    cex = 1.5,
+    xpd = t)
+
+
+```
+
+
+
+
+```{r echo = F}
+
+m2ab.labels = unique(m.fig2ab$Sample)
+t.m2ab = data.frame(Sample1 = m2ab.labels[1],
+                    Sample2 = m2ab.labels[2],
+                    pval = t.test(x = m.fig2ab[m.fig2ab$Sample == m2ab.labels[1], "Rate"],
+                                  y = m.fig2ab[m.fig2ab$Sample == m2ab.labels[2], "Rate"],
+                                  paired = F)[[3]])
+
+i=3
+while(i<=length(unique(m.fig2ab$Sample))){
+  temp = data.frame(Sample1 = m2ab.labels[i],
+                    Sample2 = m2ab.labels[i+1],
+                    pval = t.test(x = m.fig2ab[m.fig2ab$Sample == m2ab.labels[i], "Rate"],
+                                  y = m.fig2ab[m.fig2ab$Sample == m2ab.labels[i+1], "Rate"],
+                                  paired = F)[[3]])
+  t.m2ab = rbind(t.m2ab, temp)
+  i=i+2
+}
+
+
+knitr::kable(t.m2ab,
+             caption = 'All t-tests for figure 2b climbing data.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(t.m2ab))[t.m2ab$pval <= .05], bold = T, color = "black", background = "gold")
+
+
+```
+
+
+
+```{r echo = F, include = F}
+
+Aleah.1 = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Aleah G85R Pharate Sex Ratio Data.csv")
+
+mean.aleah1 = setNames(c(mean(Aleah.1$PercentM), mean(Aleah.1$PercentF), mean(Aleah.1$PercentU)),
+                       c("Male", "Female", "Indeterminate"))
+stderr.aleah1 = setNames(c(sd(Aleah.1$PercentM)/(sqrt(11)),
+                           sd(Aleah.1$PercentF)/(sqrt(11)),
+                           sd(Aleah.1$PercentU)/(sqrt(11))),
+                       c("Male", "Female", "Indeterminate"))
+
+
+
+par(mar = c(8,4,4,2), lwd = 3)
+
+barplot(height = mean.aleah1,
+        ylim = c(0, 100),
+        col = c("royalblue", "deeppink", "grey40"),
+        las = 1,
+        ylab = "Percent Total Pharates",
+        main = "G85R Pharate Sex Ratio",
+        border = "black")
+
+axis(side = 2,
+     at = c(0,20,40,60,80,100),
+     lwd = 3,
+     line = 0,
+     labels = T,
+     las = 2,
+     xpd = T)
+
+lines(x = c(0,3.75),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+
+i = 1
+while(i <= length(stderr.aleah1)){
+  lines(x = tick.x[c(i,i)],
+        y = c(mean.aleah1[i], (mean.aleah1[i] + stderr.aleah1[i])),
+        lwd = 3,
+        col = "black")
+  
+  lines(x = c((tick.x[i] - .25), (tick.x[i] + .25)),
+        y = c((mean.aleah1[i] + stderr.aleah1[i]), (mean.aleah1[i] + stderr.aleah1[i])),
+        lwd = 3,
+        col = "black")
+  
+  i = i +1
+}
+
+```
+
+
+```{r echo = F, include = F}
+
+sum.aleah1 = setNames(c(sum(Aleah.1$Male), sum(Aleah.1$Female), sum(Aleah.1$Undetermined)),
+                      c("Males", "Females", "Indeterminate"))
+
+pie(sum.aleah1,
+    labels = c(paste0(names(mean.aleah1), " (", signif(mean.aleah1, 3), "%)")),
+    init.angle = -90,
+    col = c("royalblue", "deeppink", "grey60"),
+    edges = 300,
+    border = T,
+    lwd = 5)
+legend('topright',
+       inset=c(0,0),
+       legend = names(mean.aleah1), 
+       fill = c("royalblue", "deeppink", "grey60"),
+       cex = 1,
+       bty = 'n',
+       pt.cex = .5,
+       xpd = T)
+
+
+```
+
+
+```{r echo = F, include = F}
+
+
+Aleah.2 = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Aleah G85R Larvae Sex Ratio Data.csv")
+
+mean.aleah2 = setNames(c(mean(na.omit(Aleah.2$G85R.M)), 
+                         mean(na.omit(Aleah.2$G85R.F)),
+                         mean(na.omit(Aleah.2$WT.M)), 
+                         mean(na.omit(Aleah.2$WT.F))),
+                       c("G85R Male", "G85R Female", "WT Male", "WT Female"))
+stderr.aleah2 = setNames(c(sd(na.omit(Aleah.2[,1]))/(length(na.omit(Aleah.2[,1]))),
+                           sd(na.omit(Aleah.2[,2]))/(length(na.omit(Aleah.2[,2]))),
+                           sd(na.omit(Aleah.2[,3]))/(length(na.omit(Aleah.2[,3]))),
+                           sd(na.omit(Aleah.2[,4]))/(length(na.omit(Aleah.2[,4])))),
+                         c("G85R Male", "G85R Female", "WT Male", "WT Female"))
+
+tick.x = c(1, 2.15, 3.9, 5.05)
+
+par(mar = c(4,4,4,2), lwd = 3)
+
+barplot(height = mean.aleah2,
+        ylim = c(0, 55),
+        col = c("royalblue", "deeppink", "royalblue", "deeppink"),
+        las = 1,
+        ylab = "Number of larvae",
+        main = "dSod1 third instar sex ratio",
+        border = "black",
+        xaxt = "n",
+        space = c(.5,.15,.75,.15))
+axis(side = 2,
+     at = c(0,10,20,30,40,50),
+     lwd = 3,
+     line = 0,
+     labels = T,
+     las = 2,
+     xpd = T)
+
+axis(side = 1,
+     at = c(1, 2.15, 3.9, 5.05),
+     lwd = 3,
+     line = 0,
+     labels = F,
+     las = 1,
+     xpd = T)
+
+axis(side = 1,
+     at = tick.x,
+     lwd = 0,
+     line = -0.25,
+     labels = c("Male", "Female", "Male", "Female"),
+     las = 1,
+     xpd = T)
+
+axis(side = 1,
+     at = c(1.55, 4.5),
+     lwd = 0,
+     line = .75,
+     labels = c("G85R", "WT"),
+     las = 1,
+     xpd = T)
+
+lines(x = c(0.25, 5.75),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+i = 1
+while(i <= length(stderr.aleah2)){
+  lines(x = tick.x[c(i,i)],
+        y = c(mean.aleah2[i], (mean.aleah2[i] + stderr.aleah2[i])),
+        lwd = 3,
+        col = "black")
+  
+  lines(x = c((tick.x[i] - .25), (tick.x[i] + .25)),
+        y = c((mean.aleah2[i] + stderr.aleah2[i]), (mean.aleah2[i] + stderr.aleah2[i])),
+        lwd = 3,
+        col = "black")
+  
+  i = i +1
+}
+
+
+lines(x = c(1,2.15),
+      y = c(22, 22),
+      lwd = 2)
+
+text(x = 1.575,
+     y = 25,
+    labels = "ns",
+    cex = 1.5,
+    xpd = t)
+
+
+lines(x = c(3.9,5.05),
+      y = c(49, 49),
+      lwd = 2)
+
+text(x = 4.4525,
+     y = 52,
+    labels = "ns",
+    cex = 1.5,
+    xpd = t)
+
+```
+
+
+```{r echo = F, include = F}
+
+
+t.Aleah2 = data.frame(Sample1 = c("G85R.Males", "WT.Males"),
+                      Sample2 = c("G85R.Females", "WT.Females"),
+                      pval = c(t.test(x = na.omit(Aleah.2$G85R.M),
+                                      y = na.omit(Aleah.2$G85R.F),
+                                      paired = F)[[3]],
+                               t.test(x = na.omit(Aleah.2$WT.M),
+                                    y = na.omit(Aleah.2$WT.F),
+                                    paired = F)[[3]]))
+
+
+
+knitr::kable(t.Aleah2,
+             caption = "All t-tests for Aleah's larval sex ratio data.")  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(t.Aleah2))[t.Aleah2$pval <= .05], bold = T, color = "black", background = "gold")
+
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=7}
+
+gbbEcl = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Ana_gbbEclosionData.csv")
+
+gbbEcl.labels = unique(gbbEcl$Genotype)
+
+gbbEcl.means = rep(0, length(gbbEcl.labels))
+
+i = 1
+while(i<=length(gbbEcl.labels)){
+  gbbEcl.means[i] = mean(gbbEcl$PercentEclosion[gbbEcl$Genotype == gbbEcl.labels[i]])
+  i = i+1
+}
+
+
+stderr.gbbEcl = setNames(c(sd(gbbEcl[gbbEcl==gbbEcl.labels[1],"PercentEclosion"])/4,
+                           sd(gbbEcl[gbbEcl==gbbEcl.labels[2],"PercentEclosion"])/4,
+                           sd(gbbEcl[gbbEcl==gbbEcl.labels[3],"PercentEclosion"])/4,
+                           sd(gbbEcl[gbbEcl==gbbEcl.labels[4],"PercentEclosion"])/4,
+                           sd(gbbEcl[gbbEcl==gbbEcl.labels[5],"PercentEclosion"])/4,
+                           sd(gbbEcl[gbbEcl==gbbEcl.labels[6],"PercentEclosion"])/4),
+                         gbbEcl.labels)
+
+
+
+par(mar = c(12,4,4,2))
+
+barplot(height = gbbEcl.means,
+        ylim = c(0, 120),
+        col = "black",
+        las = 2,
+        ylab = "Eclosion frequency (%)",
+        main = "Eclosion from the pupal case",
+        xaxt = "n",
+        yaxt = "n")
+axis(side = 1,
+     at = c(.7 + (c(0:5)*1.2)),
+     lwd = 3,
+     line = 0,
+     labels = gbbEcl.labels,
+     xpd = T,
+     las = 2)
+axis(side = 2,
+     at = c(0,20,40,60,80,100),
+     lwd = 3,
+     line = 0,
+     labels = T,
+     xpd = T,
+     las = 2)
+
+
+tick.x = c(.7 + (c(0:5)*1.2))
+
+i = 1
+while(i <= length(stderr.gbbEcl)){
+  if(stderr.gbbEcl[i] > 0){
+    lines(x = tick.x[c(i,i)],
+          y = c(gbbEcl.means[i], (gbbEcl.means[i] + stderr.gbbEcl[i])),
+          lwd = 3,
+          col = "black")
+    
+    lines(x = c((tick.x[i] - .25), (tick.x[i] + .25)),
+          y = c((gbbEcl.means[i] + stderr.gbbEcl[i]), (gbbEcl.means[i] + stderr.gbbEcl[i])),
+          lwd = 3,
+          col = "black")  
+  }
+  i = i +1
+}
+
+
+```
+
+
+
+
+```{r echo = F, include = T, warning=F}
+
+##Running a Wilcoxon Rank Sum non parametric test for data that is not normally distributed
+
+t.table = data.frame(Genotype1 = "WT(LoxP/cr)",
+                     Genotype2 = "G85R(hr/cr)" ,
+                     pval = wilcox.test(x = gbbEcl[gbbEcl$Genotype == "WT(LoxP/cr)","PercentEclosion"],
+                                   y = gbbEcl[gbbEcl$Genotype == "G85R(hr/cr)","PercentEclosion"],
+                                   paired = F)[[3]])
+
+ t.temp = data.frame(Genotype1 = "G85R(hr/cr)",
+                     Genotype2 = "OK371-gbb; G85R(hr/cr)",
+                     pval = wilcox.test(x = gbbEcl[gbbEcl$Genotype == "G85R(hr/cr)","PercentEclosion"],
+                                        y = gbbEcl[gbbEcl$Genotype == "OK371-gbb; G85R(hr/cr)","PercentEclosion"],
+                                        paired = F)[[3]])
+t.table = rbind(t.table, t.temp)
+      
+      
+t.temp = data.frame(Genotype1 = "G85R(hr/cr)",
+                    Genotype2 = "OK371-SaxA; G85R(hr/cr)",
+                    pval = t.test(x = gbbEcl[gbbEcl$Genotype == "G85R(hr/cr)","PercentEclosion"],
+                                       y = gbbEcl[gbbEcl$Genotype == "OK371-SaxA; G85R(hr/cr)","PercentEclosion"],
+                                       paired = F)[[3]])
+t.table = rbind(t.table, t.temp)
+      
+      
+      
+
+t.stripe = t.table$pval <= .05
+#row.names(t.table) = c(1:nrow(t.table))
+
+knitr::kable(t.table,
+             caption = 'All t-tests for figure 1B eclosion data.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", background = "gold")
+
+```
+
+
+
+```{r echo = F}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/UBLegMorphologyData.csv")
+
+temp$Genotype[temp$Genotype == "WT"] = "WT(cr)"
+temp$Genotype[temp$Genotype == "G85R"] = "G85R(cr)"
+
+temp$Genotype = factor(temp$Genotype, levels = unique(temp$Genotype))
+
+morph.data = temp[,c(1:2,7:9,12:14)]
+
+sum.morph = setNames(apply(morph.data[,3:8], MARGIN = 1, sum), morph.data$Genotype)
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(0, 8),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= "Morphology Score",
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = "Leg Axon Morphology")
+
+grid(nx=NA, ny=NULL, col = "grey50", lwd = .75)
+      
+boxplot(sum.morph~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(0, 6),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        yaxt = "n",
+        frame = F)
+
+
+  axis(side = 1,
+       at = c(1,2),
+       lwd = 3,
+       line = -.45,
+       labels = unique(temp$Genotype),
+       xpd = T)
+  
+    lines(x = c(0.4, 2.5),
+       y = c(0,0),
+       lwd = 3,
+       xpd = T)
+    
+
+pval = t.test(x = sum.morph[1:9],
+              y = sum.morph[10:18],
+              paired = F)[[3]]
+
+xpos = c(0, -.1, -.05, -.05, .1, -.2, .2, .05, .05,
+         0, -.1, .1, -.2, 0, .2, -.05, .05, 0) + as.numeric(temp$Genotype)
+
+points(x = xpos,
+       y = sum.morph,
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[as.character(temp$Genotype)])
+
+
+
+      axis(side = 2,
+       at = c(0:8),
+       lwd = 3,
+       line = 0,
+       labels = T,
+       xpd = T,
+       las = 2)
+  
+  text(x = 2.25,
+       y = 7.5,
+       label = paste0("pval = ", signif(pval, 3)))
+  
+```
+
+
+```{r echo = F}
+library(ggplot2)
+library(ggridges)
+
+#best.combo = data_matrix[,c(2,3,4,7,8,9)]
+
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/UBLegMorphologyData.csv")
+
+temp.titles = c("Is the leg short?",
+                "Is there scrunching or curving?",
+                "Is the axonal bundle straight?",
+                "Does the axonal bundle split or are there chunks missing?",
+                "Does the branching look organized?",
+                "Is the branching following a pattern tiling?",
+                "Is there branching in all aspects of the femur?",
+                "Is the mitochonria in the entire axonal bundle?",
+                "Do all branches have mitochondria?")
+
+
+best.titles = temp.titles[c(2,3,4,7,8,9)]
+
+temp$Genotype[temp$Genotype == "WT"] = "WT(cr)"
+temp$Genotype[temp$Genotype == "G85R"] = "G85R(cr)"
+
+temp$Genotype = factor(temp$Genotype, levels = unique(temp$Genotype))
+
+morph.data = temp[,c(1:2,7:9,12:14)]
+
+WT.morphdata = morph.data[morph.data$Genotype == "WT(cr)",]
+WT.morphdata = t(WT.morphdata[,3:8])
+WT.morphdata = as.data.frame(WT.morphdata)
+WT.morphdata$Morph = best.titles
+wt.morphplot = data.frame(Morph = as.character(),
+                          Score = as.numeric())
+i=1
+while(i<=9){
+  temp.morph = data.frame(Morph = WT.morphdata$Morph,
+                          Score = WT.morphdata[,i])
+  wt.morphplot = rbind(wt.morphplot, temp.morph)
+  i = i +1
+}
+wt.morphplot$Morph = factor(wt.morphplot$Morph, levels = best.titles)
+wt.morphplot$Species = "WT(cr)"
+
+
+GR.morphdata = morph.data[morph.data$Genotype == "G85R(cr)",]
+GR.morphdata = t(GR.morphdata[,3:8])
+GR.morphdata = as.data.frame(GR.morphdata)
+GR.morphdata$Morph = best.titles
+GR.morphplot = data.frame(Morph = as.character(),
+                          Score = as.numeric())
+i=1
+while(i<=9){
+  temp.morph = data.frame(Morph = GR.morphdata$Morph,
+                          Score = GR.morphdata[,i])
+  GR.morphplot = rbind(GR.morphplot, temp.morph)
+  i = i +1
+}
+GR.morphplot$Morph = factor(GR.morphplot$Morph, levels = best.titles)
+GR.morphplot$Species = "G85R(cr)"
+
+sum.morph = data.frame(Morph = "Total Score",
+                       Score = apply(morph.data[,3:8], MARGIN = 1, sum),
+                       Species = morph.data$Genotype)
+sum.morph$Species = factor(sum.morph$Species, levels = c("WT(cr)", "G85R(cr)"))
+
+all.morphplot = rbind(wt.morphplot, GR.morphplot)
+all.morphplot$Species = factor(all.morphplot$Species, levels = c("WT(cr)", "G85R(cr)"))
+#all.morphplot = rbind(all.morphplot, sum.morph)
+
+
+ggplot(
+  all.morphplot, 
+  aes(x = `Score`, y = `Morph`)
+  ) +
+  geom_density_ridges_gradient(
+    aes(fill = Species), scale = 1
+    ) +
+  scale_fill_manual(
+    values = alpha(c("royalblue", "orange"), .5)
+  ) +
+  labs(title = 'Morphology Score')
+
+```
+
+
+
+
+```{r echo = F, fig.width=9}
+
+morph.percents = data.frame(WT = as.numeric(),
+                            G85R = as.numeric())
+i = 3
+while(i<= ncol(morph.data)){
+  temp.wt = morph.data[morph.data$Genotype == "WT(cr)",i]
+  temp.g85r = morph.data[morph.data$Genotype == "G85R(cr)",i]
+  morph.percents[i-2, ] = c((sum(temp.wt)/length(temp.wt)) *100,
+                            (sum(temp.g85r)/length(temp.g85r)) *100)
+  i = i+1
+}
+
+row.names(morph.percents) = colnames(morph.data)[3:ncol(morph.data)]
+
+par(mar = c(5,24,5,10))
+barplot(as.matrix(t(morph.percents))[2:1,],
+        names.arg = best.titles,
+        beside = T,
+        horiz = T,
+        las = 2,
+        col = alpha(std.colors[c("WT(cr)", "G85R(cr)")][2:1], 1),
+        xlab = "Percent of Samples with Normal Morphology")
+legend(x= 100,
+       y = 18,
+       legend = c("WT(cr)", "G85R(cr)"), 
+       fill = alpha(std.colors[c("WT(cr)", "G85R(cr)")], 1),
+       cex = 1,
+       bty = 'n',
+       pt.cex = .5,
+       xpd = T)
+
+```
+
+
+
+```{r echo = F, fig.show=F}
+
+library(beeswarm)
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/20250809_AllAnaData.csv", row.names = 1)
+temp = temp[temp$Boutons != "x",]
+temp$Boutons = as.numeric(temp$Boutons)
+temp$Genotype[temp$Genotype == "WT-cr/LoxP"] = "WT(cr/LoxP)"
+temp$Genotype[temp$Genotype == "G85R"] = "G85R(cr/hr)"
+temp$Genotype[temp$Genotype == "G85Rcr/G85Rhr"] = "G85R(cr/hr)"
+
+temp$Genotype[temp$Genotype == "OK371 > gbb [WT]"] = "OK371-gbb; WT(cr/LoxP)"
+temp$Genotype[temp$Genotype == "OK371 > gbb [G85R]"] = "OK371-gbb; G85R(cr/hr)"
+temp$Genotype[temp$Genotype == "OK371>gbb [WT]"] = "OK371-gbb; WT(cr/LoxP)"
+temp$Genotype[temp$Genotype == "OK371>gbb [G85R]"] = "OK371-gbb; G85R(cr/hr)"
+temp$Genotype[temp$Genotype == "OK371>gbb [WTcr/LoxP]"] = "OK371-gbb; WT(cr/LoxP)"
+temp$Genotype[temp$Genotype == "OK371>gbb [WT-cr/LoxP]"] = "OK371-gbb; WT(cr/LoxP)"
+temp$Genotype[temp$Genotype == "OK371>gbb [G85Rcr/G85Rhr]"] = "OK371-gbb; G85R(cr/hr)"
+temp$Genotype[temp$Genotype == "OK371>gbb [G85cr/G85Rhr]"] = "OK371-gbb; G85R(cr/hr)"
+
+temp$Genotype[temp$Genotype == "OK371 > saxA [WT]"] = "OK371-saxA; WT(cr/LoxP)"
+temp$Genotype[temp$Genotype == "OK371 > saxA [G85R]"] = "OK371-saxA; G85R(cr/hr)"
+temp$Genotype[temp$Genotype == "OK371> saxA [WT-cr/LoxP]"] = "OK371-saxA; WT(cr/LoxP)"
+temp$Genotype[temp$Genotype == "OK371>saxA G85R"] = "OK371-saxA; G85R(cr/hr)"
+temp$Genotype[temp$Genotype == "OK371>saxA [WTcr/LoxP]"] = "OK371-saxA; WT(cr/LoxP)"
+temp$Genotype[temp$Genotype == "OK371>saxA [WT-cr/LoxP]"] = "OK371-saxA; WT(cr/LoxP)"
+temp$Genotype[temp$Genotype == "OK371>saxA [G85Rcr/G85Rhr]"] = "OK371-saxA; G85R(cr/hr)"
+
+
+temp$Genotype = factor(temp$Genotype, levels = unique(temp$Genotype))
+
+VNC = temp[temp$Data == "VNC",]
+VNC$CTCF = VNC$CTCF/1000
+geno = unique(VNC$Genotype)
+
+
+```
+
+
+```{r echo = F, fig.height=6}
+
+
+
+par(mar=c(11.25, 4.1, 4.1, 2))
+
+
+boxplot(VNC$CTCF~VNC$Genotype,
+        xaxt = 'none',
+        xlab = NA,
+        col = hex(std.colors[unique(VNC$Genotype)], .25),
+        ylab = "RFU",
+        main = "Larval VNC fluorescence",
+        ylim = c(0,1800))
+
+beeswarm(VNC$CTCF~as.numeric(VNC$Genotype),
+       pch = 21,
+       cex = 1.5,
+       spacing = 1.5,
+       method = "swarm",
+       bg = as.character(std.colors[unique(VNC$Genotype)]),
+       add = T)
+
+
+axis(side = 1,
+     at = c(1:length(unique(VNC$Genotype))),
+     labels = c(unique(VNC$Genotype)),
+     cex = .75,
+     las = 2,
+     lwd = 0,
+     line = -.75)
+
+lines(x = c(1,2),
+      y = c(1100, 1100),
+      lwd = 1.5)
+
+text(x = 1.5,
+     y = 1175,
+    labels = "*",
+    cex = 1.5,
+    xpd = t)
+
+lines(x = c(2,4),
+      y = c(1400, 1400),
+      lwd = 1.5)
+
+text(x = 3,
+     y = 1475,
+    labels = "*",
+    cex = 1.5,
+    xpd = t)
+
+lines(x = c(2,6),
+      y = c(1600, 1600),
+      lwd = 1.5)
+
+text(x = 4,
+     y = 1675,
+    labels = "*",
+    cex = 1.5,
+    xpd = t)
+
+```
+
+
+
+```{r echo = F}
+btd = temp[temp$Data == "VNC",]
+
+t.data = list("WT(cr/LoxP)" = btd$CTCF[btd$Genotype == "WT(cr/LoxP)"],
+                    "G85R(cr/hr)" = btd$CTCF[btd$Genotype == "G85R(cr/hr)"],
+                    "OK371-gbb; WT(cr/LoxP)" = btd$CTCF[btd$Genotype == "OK371-gbb; WT(cr/LoxP)"],
+                    "OK371-gbb; G85R(cr/hr)" = btd$CTCF[btd$Genotype == "OK371-gbb; G85R(cr/hr)"],
+                    "OK371-saxA; WT(cr/LoxP)" = btd$CTCF[btd$Genotype == "OK371-saxA; WT(cr/LoxP)"],
+                    "OK371-saxA; G85R(cr/hr)" = btd$CTCF[btd$Genotype == "OK371-saxA; G85R(cr/hr)"])
+
+t.table = data.frame(Genotype1 = character(),
+                     Genotype2 = character(),
+                     pval = numeric())
+
+i=1
+while(i <= length(t.data)){
+  j = i+1
+  while(j <= length(t.data)){
+    t.temp = data.frame(Genotype1 = geno[i],
+                        Genotype2 = geno[j],
+                        pval = t.test(x = t.data[[i]],
+                                      y = t.data[[j]],
+                                      paired = F)[[3]])
+    t.table = rbind(t.table, t.temp)
+      j = j+1
+  }
+  i = i+1
+}
+
+
+t.stripe = t.table$pval <= .05
+knitr::kable(t.table,
+             caption = 'All t-tests for VNC data.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", background = "gold")
+
+```
+
+
+
+```{r include = F, echo = F}
+
+fig4ab = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 4AB.csv", header = T)
+
+keep = rep(T, nrow(fig4ab))
+keep[fig4ab$day == 2] = F
+keep[grep("m", fig4ab$vial_ID)] = T
+
+fig4ab = fig4ab[keep,]
+
+female = fig4ab[grep('f', fig4ab$vial_ID),]
+male = fig4ab[grep('m', fig4ab$vial_ID),]
+
+f.con = na.omit(female[female$geno == 'silent' | female$geno == 'A4V',])
+f.cha = na.omit(female[grep('cha', female$geno),])
+
+fallcha = rbind(f.con, f.cha)
+fallcha$sample = paste0(fallcha$geno, fallcha$day)
+
+fcha.mean = unique(fallcha[,c('geno', 'day')])
+fcha.mean$sample = paste0(fcha.mean$geno, fcha.mean$day)
+fcha.mean$mean = 0
+
+i=1
+while(i<=nrow(fcha.mean)){
+  fcha.mean$mean[i] = mean(fallcha[fallcha$sample == fcha.mean$sample[i], 'corrected.values'])
+  i = i+1
+}
+
+fcha.mean = fcha.mean[order(fcha.mean$day),]
+
+
+m.con = na.omit(male[male$geno == 'silent' | male$geno == 'A4V',])
+m.cha = na.omit(male[grep('cha', male$geno),])
+
+mallcha = rbind(m.con, m.cha)
+mallcha$sample = paste0(mallcha$geno, mallcha$day)
+
+mcha.mean = unique(mallcha[,c('geno', 'day')])
+mcha.mean$sample = paste0(mcha.mean$geno, mcha.mean$day)
+mcha.mean$mean = 0
+
+i=1
+while(i<=nrow(mcha.mean)){
+  mcha.mean$mean[i] = mean(mallcha[mallcha$sample == mcha.mean$sample[i], 'corrected.values'])
+  i = i+1
+}
+
+mcha.mean = mcha.mean[order(mcha.mean$day),]
+
+
+
+```
+
+
+```{r echo = F, include = F}
+
+female = fig4ab[grep('f', fig4ab$vial_ID),]
+female$sample = paste0(female$geno, female$day)
+
+fmean = unique(female[,c('geno', 'day', 'sample')])
+fstd = fmean
+eb = fmean
+fmean$mean = 0
+fstd$std = 0
+
+i=1
+while(i<=nrow(fmean)){
+  fmean$mean[i] = mean(na.omit(female[female$sample == fmean$sample[i], 'corrected.values']))
+  
+  fstd$std[i] = (var(na.omit(female[female$sample == fmean$sample[i], 'corrected.values'])))
+  
+  i = i+1
+}
+
+flm = data.frame(geno = unique(female$geno),
+                x0 = 2,
+                x1 = 27,
+                y0 = 0,
+                y1 = 0)
+
+i=1
+while(i<=nrow(flm)){
+  temp=na.omit(female[female$geno == flm$geno[i], ])
+  temp.lm = lm(temp$corrected.values~temp$day)
+  flm$y0[i] = temp.lm[[1]][2]*2 + temp.lm[[1]][1]
+  flm$y1[i] = temp.lm[[1]][2]*27 + temp.lm[[1]][1]
+  i = i +1
+}
+
+row.names(flm) = flm$geno
+
+fmean = fmean[order(fmean$day),]
+fstd = fstd[order(fstd$day),]
+eb = eb[order(eb$day),]
+
+eb$y0 = fmean$mean - fstd$std
+eb$y1 = fmean$mean + fstd$std
+
+```
+
+
+```{r echo = F, include = F}
+
+male = fig4ab[grep('m', fig4ab$vial_ID),]
+male$sample = paste0(male$geno, male$day)
+
+mmean = unique(male[,c('geno', 'day', 'sample')])
+mstd = mmean
+eb = mmean
+mmean$mean = 0
+mstd$std = 0
+
+i=1
+while(i<=nrow(mmean)){
+  mmean$mean[i] = mean(na.omit(male[male$sample == mmean$sample[i], 'corrected.values']))
+  
+  mstd$std[i] = (var(na.omit(male[male$sample == mmean$sample[i], 'corrected.values'])))
+  
+  i = i+1
+}
+
+mlm = data.frame(geno = unique(male$geno),
+                x0 = 2,
+                x1 = 27,
+                y0 = 0,
+                y1 = 0)
+
+i=1
+while(i<=nrow(mlm)){
+  temp=na.omit(male[male$geno == mlm$geno[i], ])
+  temp.lm = lm(temp$corrected.values~temp$day)
+  mlm$y0[i] = temp.lm[[1]][2]*2 + temp.lm[[1]][1]
+  mlm$y1[i] = temp.lm[[1]][2]*27 + temp.lm[[1]][1]
+  i = i +1
+}
+
+row.names(mlm) = mlm$geno
+
+mmean = mmean[order(mmean$day),]
+mstd = mstd[order(mstd$day),]
+eb = eb[order(eb$day),]
+
+eb$y0 = mmean$mean - mstd$std
+eb$y1 = mmean$mean + mstd$std
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=6}
+
+lcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+pcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar=c(5.1, 4.1, 4.1, 15.1))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0, max(c(fmean$mean, mmean$mean))),
+     xlim = c(1,27),
+     ylab = 'Mean Velocity (cm/s)',
+     xlab = 'Day',
+     xaxt = 'n',
+     yaxt = 'n',
+     main = "Females",
+     frame.plot = F)
+
+#axis(1, at = fmean[fmean$geno == 'silent', 'day'])
+axis(1, at = 1:27, label = F, lwd = 3, line = -0.75)
+axis(1, at = 2*(1:13), tick = F, line = -0.75)
+
+axis(2, at = 0:3, label = F, lwd = 3, line = -0.05)
+axis(2, at = 0:3, tick = F, las = 1, line = -0.05)
+
+lines(x=c(0,0),
+      y=c(0,3.5),
+      lwd = 3,
+      xpd = T)
+
+lines(x=c(0,27),
+      y=c(0,0),
+      lwd = 3,
+      xpd = T)
+
+
+lines(x = fmean[fmean$geno == 'silent', 'day'],
+      y = fmean[fmean$geno == 'silent', 'mean'],
+      type = 'l',
+      col = lcol[1],
+      lwd = 2)
+
+lines(x = fmean[fmean$geno == 'A4V', 'day'],
+      y = fmean[fmean$geno == 'A4V', 'mean'],
+      type = 'l',
+      col = pcol[2],
+      lwd = 2)
+
+lines(x = fmean[fmean$geno == 'silentcha', 'day'],
+      y = fmean[fmean$geno == 'silentcha', 'mean'],
+      type = 'l',
+      col = pcol[3],
+      lwd = 2)
+
+lines(x = fmean[fmean$geno == 'A4Vcha', 'day'],
+      y = fmean[fmean$geno == 'A4Vcha', 'mean'],
+      type = 'l',
+      col = pcol[4],
+      lwd = 2)
+
+
+
+points(x = fmean[fmean$geno == 'silent', 'day'],
+       y = fmean[fmean$geno == 'silent', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = fmean[fmean$geno == 'A4V', 'day'],
+       y = fmean[fmean$geno == 'A4V', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = fmean[fmean$geno == 'silentcha', 'day'],
+       y = fmean[fmean$geno == 'silentcha', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = fmean[fmean$geno == 'A4Vcha', 'day'],
+       y = fmean[fmean$geno == 'A4Vcha', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+
+
+
+
+points(x = fmean[fmean$geno == 'silent', 'day'],
+       y = fmean[fmean$geno == 'silent', 'mean'],
+       bg = hex(pcol[1], .5),
+       col = pcol[1],
+       pch = 23,
+       cex =2)
+
+points(x = fmean[fmean$geno == 'A4V', 'day'],
+       y = fmean[fmean$geno == 'A4V', 'mean'],
+       bg = hex(pcol[2], .5),
+       col = pcol[2],
+       pch = 21,
+       cex =2)
+points(x = fmean[fmean$geno == 'silentcha', 'day'],
+       y = fmean[fmean$geno == 'silentcha', 'mean'],
+       bg = hex(pcol[3], .5),
+       col = pcol[3],
+       pch = 23,
+       cex =2)
+points(x = fmean[fmean$geno == 'A4Vcha', 'day'],
+       y = fmean[fmean$geno == 'A4Vcha', 'mean'],
+       bg = hex(pcol[4], .5),
+       col = pcol[4],
+       pch = 21,
+       cex =2)
+
+
+
+
+
+
+
+#legend(x = 29,
+#       y = 1.8,
+legend("topright",
+       legend = c('Silent', 'A4V',
+                  'ChAT>gbb;Silent', 'ChAT>gbb;A4V'),
+       pch = c(23,21,23,21),
+       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), hex(pcol[3], .5),
+                hex(pcol[4], .5)),
+       bty = 'n',
+       y.intersp = 1.2,
+       pt.cex = 2,
+       xpd=TRUE)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=6}
+
+lcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+pcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar=c(5.1, 4.1, 4.1, 15.1))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0, max(c(fmean$mean, mmean$mean))),
+     xlim = c(1,27),
+     ylab = 'Mean Velocity (cm/s)',
+     xlab = 'Day',
+     xaxt = 'n',
+     yaxt = 'n',
+     main = "Females",
+     frame.plot = F)
+
+#axis(1, at = fmean[fmean$geno == 'silent', 'day'])
+axis(1, at = 1:27, label = F, lwd = 3, line = -0.75)
+axis(1, at = 2*(1:13), tick = F, line = -0.75)
+
+axis(2, at = 0:3, label = F, lwd = 3, line = -0.05)
+axis(2, at = 0:3, tick = F, las = 1, line = -0.05)
+
+lines(x=c(0,0),
+      y=c(0,3.5),
+      lwd = 3,
+      xpd = T)
+
+lines(x=c(0,27),
+      y=c(0,0),
+      lwd = 3,
+      xpd = T)
+
+lines(x = fmean[fmean$geno == 'silent', 'day'],
+      y = fmean[fmean$geno == 'silent', 'mean'],
+      type = 'l',
+      col = lcol[1],
+      lwd = 2)
+
+lines(x = fmean[fmean$geno == 'A4V', 'day'],
+      y = fmean[fmean$geno == 'A4V', 'mean'],
+      type = 'l',
+      col = pcol[2],
+      lwd = 2)
+
+
+
+lines(x = fmean[fmean$geno == 'silentok', 'day'],
+      y = fmean[fmean$geno == 'silentok', 'mean'],
+      type = 'l',
+      col = pcol[5],
+      lwd = 2)
+
+lines(x = fmean[fmean$geno == 'A4Vok', 'day'],
+      y = fmean[fmean$geno == 'A4Vok', 'mean'],
+      type = 'l',
+      col = pcol[6],
+      lwd = 2)
+
+
+
+points(x = fmean[fmean$geno == 'silent', 'day'],
+       y = fmean[fmean$geno == 'silent', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = fmean[fmean$geno == 'A4V', 'day'],
+       y = fmean[fmean$geno == 'A4V', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+
+points(x = fmean[fmean$geno == 'silentok', 'day'],
+       y = fmean[fmean$geno == 'silentok', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = fmean[fmean$geno == 'A4Vok', 'day'],
+       y = fmean[fmean$geno == 'A4Vok', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+
+
+
+points(x = fmean[fmean$geno == 'silent', 'day'],
+       y = fmean[fmean$geno == 'silent', 'mean'],
+       bg = hex(pcol[1], .5),
+       col = pcol[1],
+       pch = 23,
+       cex =2)
+
+points(x = fmean[fmean$geno == 'A4V', 'day'],
+       y = fmean[fmean$geno == 'A4V', 'mean'],
+       bg = hex(pcol[2], .5),
+       col = pcol[2],
+       pch = 21,
+       cex =2)
+
+points(x = fmean[fmean$geno == 'silentok', 'day'],
+       y = fmean[fmean$geno == 'silentok', 'mean'],
+       bg = hex(pcol[5], .5),
+       col = pcol[5],
+       pch = 23,
+       cex =2)
+points(x = fmean[fmean$geno == 'A4Vok', 'day'],
+       y = fmean[fmean$geno == 'A4Vok', 'mean'],
+       bg = hex(pcol[6], .5),
+       col = pcol[6],
+       pch = 21,
+       cex =2)
+
+
+
+
+
+
+#legend(x = 29,
+#       y = 1.8,
+legend("topright",
+       legend = c('Silent', 'A4V',
+                  'OK371>gbb;Silent', 'OK371>gbb;A4V'),
+       pch = c(23,21,23,21,23,21),
+       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), hex(pcol[5], .5), hex(pcol[6], .5)),
+       bty = 'n',
+       y.intersp = 1.2,
+       pt.cex = 2,
+       xpd=TRUE)
+
+```
+
+
+
+
+```{r echo = F, fig.width=10, fig.height=6}
+
+lcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+pcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar=c(5.1, 4.1, 4.1, 15.1))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0, max(c(fmean$mean, mmean$mean))),
+     xlim = c(1,27),
+     ylab = 'Mean Velocity (cm/s)',
+     xlab = 'Day',
+     xaxt = 'n',
+     yaxt = 'n',
+     main = "Males",
+     frame.plot = F)
+
+#axis(1, at = fmean[fmean$geno == 'silent', 'day'])
+axis(1, at = 1:27, label = F, lwd = 3, line = -0.75)
+axis(1, at = 2*(1:13), tick = F, line = -0.75)
+
+axis(2, at = 0:3, label = F, lwd = 3, line = -0.05)
+axis(2, at = 0:3, tick = F, las = 1, line = -0.05)
+
+lines(x=c(0,0),
+      y=c(0,3.5),
+      lwd = 3,
+      xpd = T)
+
+lines(x=c(0,27),
+      y=c(0,0),
+      lwd = 3,
+      xpd = T)
+
+lines(x = mmean[mmean$geno == 'silent', 'day'],
+      y = mmean[mmean$geno == 'silent', 'mean'],
+      type = 'l',
+      col = lcol[1],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'A4V', 'day'],
+      y = mmean[mmean$geno == 'A4V', 'mean'],
+      type = 'l',
+      col = pcol[2],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'silentcha', 'day'],
+      y = mmean[mmean$geno == 'silentcha', 'mean'],
+      type = 'l',
+      col = pcol[3],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'A4Vcha', 'day'],
+      y = mmean[mmean$geno == 'A4Vcha', 'mean'],
+      type = 'l',
+      col = pcol[4],
+      lwd = 2)
+
+
+
+points(x = mmean[mmean$geno == 'silent', 'day'],
+       y = mmean[mmean$geno == 'silent', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4V', 'day'],
+       y = mmean[mmean$geno == 'A4V', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = mmean[mmean$geno == 'silentcha', 'day'],
+       y = mmean[mmean$geno == 'silentcha', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4Vcha', 'day'],
+       y = mmean[mmean$geno == 'A4Vcha', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+
+
+
+
+points(x = mmean[mmean$geno == 'silent', 'day'],
+       y = mmean[mmean$geno == 'silent', 'mean'],
+       bg = hex(pcol[1], .5),
+       col = pcol[1],
+       pch = 23,
+       cex =2)
+
+points(x = mmean[mmean$geno == 'A4V', 'day'],
+       y = mmean[mmean$geno == 'A4V', 'mean'],
+       bg = hex(pcol[2], .5),
+       col = pcol[2],
+       pch = 21,
+       cex =2)
+points(x = mmean[mmean$geno == 'silentcha', 'day'],
+       y = mmean[mmean$geno == 'silentcha', 'mean'],
+       bg = hex(pcol[3], .5),
+       col = pcol[3],
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4Vcha', 'day'],
+       y = mmean[mmean$geno == 'A4Vcha', 'mean'],
+       bg = hex(pcol[4], .5),
+       col = pcol[4],
+       pch = 21,
+       cex =2)
+
+
+
+
+
+
+
+#legend(x = 29,
+#       y = 1.8,
+legend("topright",
+       legend = c('Silent', 'A4V',
+                  'ChAT>gbb;Silent', 'ChAT>gbb;A4V'),
+       pch = c(23,21,23,21,23,21),
+       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), hex(pcol[3], .5), hex(pcol[4], .5)),
+       bty = 'n',
+       y.intersp = 1.2,
+       pt.cex = 2,
+       xpd=TRUE)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=6}
+
+lcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+pcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar=c(5.1, 4.1, 4.1, 15.1))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0, max(c(fmean$mean, mmean$mean))),
+     xlim = c(1,27),
+     ylab = 'Mean Velocity (cm/s)',
+     xlab = 'Day',
+     xaxt = 'n',
+     yaxt = 'n',
+     main = "Males",
+     frame.plot = F)
+
+#axis(1, at = fmean[fmean$geno == 'silent', 'day'])
+axis(1, at = 1:27, label = F, lwd = 3, line = -0.75)
+axis(1, at = 2*(1:13), tick = F, line = -0.75)
+
+axis(2, at = 0:3, label = F, lwd = 3, line = -0.05)
+axis(2, at = 0:3, tick = F, las = 1, line = -0.05)
+
+lines(x=c(0,0),
+      y=c(0,3.5),
+      lwd = 3,
+      xpd = T)
+
+lines(x=c(0,27),
+      y=c(0,0),
+      lwd = 3,
+      xpd = T)
+
+lines(x = mmean[mmean$geno == 'silent', 'day'],
+      y = mmean[mmean$geno == 'silent', 'mean'],
+      type = 'l',
+      col = lcol[1],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'A4V', 'day'],
+      y = mmean[mmean$geno == 'A4V', 'mean'],
+      type = 'l',
+      col = pcol[2],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'silentok', 'day'],
+      y = mmean[mmean$geno == 'silentok', 'mean'],
+      type = 'l',
+      col = pcol[5],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'A4Vok', 'day'],
+      y = mmean[mmean$geno == 'A4Vok', 'mean'],
+      type = 'l',
+      col = pcol[6],
+      lwd = 2)
+
+
+
+points(x = mmean[mmean$geno == 'silent', 'day'],
+       y = mmean[mmean$geno == 'silent', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4V', 'day'],
+       y = mmean[mmean$geno == 'A4V', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = mmean[mmean$geno == 'silentok', 'day'],
+       y = mmean[mmean$geno == 'silentok', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4Vcha', 'day'],
+       y = mmean[mmean$geno == 'A4Vcha', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+
+
+
+
+points(x = mmean[mmean$geno == 'silent', 'day'],
+       y = mmean[mmean$geno == 'silent', 'mean'],
+       bg = hex(pcol[1], .5),
+       col = pcol[1],
+       pch = 23,
+       cex =2)
+
+points(x = mmean[mmean$geno == 'A4V', 'day'],
+       y = mmean[mmean$geno == 'A4V', 'mean'],
+       bg = hex(pcol[2], .5),
+       col = pcol[2],
+       pch = 21,
+       cex =2)
+points(x = mmean[mmean$geno == 'silentok', 'day'],
+       y = mmean[mmean$geno == 'silentok', 'mean'],
+       bg = hex(pcol[5], .5),
+       col = pcol[5],
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4Vok', 'day'],
+       y = mmean[mmean$geno == 'A4Vok', 'mean'],
+       bg = hex(pcol[6], .5),
+       col = pcol[6],
+       pch = 21,
+       cex =2)
+
+
+
+
+
+
+
+#legend(x = 29,
+#       y = 1.8,
+legend("topright",
+       legend = c('Silent', 'A4V',
+                  'OK371>gbb;Silent', 'OK371>gbb;A4V'),
+       pch = c(23,21,23,21,23,21),
+       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), hex(pcol[5], .5), hex(pcol[6], .5)),
+       bty = 'n',
+       y.intersp = 1.2,
+       pt.cex = 2,
+       xpd=TRUE)
+
+```
+
+
+
+```{r include = F, echo = F}
+
+fig4cd = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 4CD.csv", header = T)
+
+fig4cd = fig4cd[fig4cd$day != 9,]
+
+female = fig4cd[grep('f', fig4cd$vial_ID),]
+male = fig4cd[grep('m', fig4cd$vial_ID),]
+
+f.con = na.omit(female[female$geno == 'silent' | female$geno == 'A4V',])
+f.cha = na.omit(female[grep('cha', female$geno),])
+
+fallcha = rbind(f.con, f.cha)
+fallcha$sample = paste0(fallcha$geno, fallcha$day)
+
+fcha.mean = unique(fallcha[,c('geno', 'day')])
+fcha.mean$sample = paste0(fcha.mean$geno, fcha.mean$day)
+fcha.mean$mean = 0
+
+i=1
+while(i<=nrow(fcha.mean)){
+  fcha.mean$mean[i] = mean(fallcha[fallcha$sample == fcha.mean$sample[i], 'corrected.values'])
+  i = i+1
+}
+
+fcha.mean = fcha.mean[order(fcha.mean$day),]
+
+
+m.con = na.omit(male[male$geno == 'silent' | male$geno == 'A4V',])
+m.cha = na.omit(male[grep('cha', male$geno),])
+
+mallcha = rbind(m.con, m.cha)
+mallcha$sample = paste0(mallcha$geno, mallcha$day)
+
+mcha.mean = unique(mallcha[,c('geno', 'day')])
+mcha.mean$sample = paste0(mcha.mean$geno, mcha.mean$day)
+mcha.mean$mean = 0
+
+i=1
+while(i<=nrow(mcha.mean)){
+  mcha.mean$mean[i] = mean(mallcha[mallcha$sample == mcha.mean$sample[i], 'corrected.values'])
+  i = i+1
+}
+
+mcha.mean = mcha.mean[order(mcha.mean$day),]
+
+
+
+```
+
+
+```{r echo = F, include = F}
+
+female = fig4cd[grep('f', fig4cd$vial_ID),]
+female$sample = paste0(female$geno, female$day)
+
+fmean = unique(female[,c('geno', 'day', 'sample')])
+fstd = fmean
+eb = fmean
+fmean$mean = 0
+fstd$std = 0
+
+i=1
+while(i<=nrow(fmean)){
+  fmean$mean[i] = mean(na.omit(female[female$sample == fmean$sample[i], 'corrected.values']))
+  
+  fstd$std[i] = (var(na.omit(female[female$sample == fmean$sample[i], 'corrected.values'])))
+  
+  i = i+1
+}
+
+flm = data.frame(geno = unique(female$geno),
+                x0 = 2,
+                x1 = 27,
+                y0 = 0,
+                y1 = 0)
+
+i=1
+while(i<=nrow(flm)){
+  temp=na.omit(female[female$geno == flm$geno[i], ])
+  temp.lm = lm(temp$corrected.values~temp$day)
+  flm$y0[i] = temp.lm[[1]][2]*2 + temp.lm[[1]][1]
+  flm$y1[i] = temp.lm[[1]][2]*27 + temp.lm[[1]][1]
+  i = i +1
+}
+
+row.names(flm) = flm$geno
+
+fmean = fmean[order(fmean$day),]
+fstd = fstd[order(fstd$day),]
+eb = eb[order(eb$day),]
+
+eb$y0 = fmean$mean - fstd$std
+eb$y1 = fmean$mean + fstd$std
+
+```
+
+
+```{r echo = F, include = F}
+
+male = fig4cd[grep('m', fig4cd$vial_ID),]
+male$sample = paste0(male$geno, male$day)
+
+mmean = unique(male[,c('geno', 'day', 'sample')])
+mstd = mmean
+eb = mmean
+mmean$mean = 0
+mstd$std = 0
+
+i=1
+while(i<=nrow(mmean)){
+  mmean$mean[i] = mean(na.omit(male[male$sample == mmean$sample[i], 'corrected.values']))
+  
+  mstd$std[i] = (var(na.omit(male[male$sample == mmean$sample[i], 'corrected.values'])))
+  
+  i = i+1
+}
+
+mlm = data.frame(geno = unique(male$geno),
+                x0 = 2,
+                x1 = 27,
+                y0 = 0,
+                y1 = 0)
+
+i=1
+while(i<=nrow(mlm)){
+  temp=na.omit(male[male$geno == mlm$geno[i], ])
+  temp.lm = lm(temp$corrected.values~temp$day)
+  mlm$y0[i] = temp.lm[[1]][2]*2 + temp.lm[[1]][1]
+  mlm$y1[i] = temp.lm[[1]][2]*27 + temp.lm[[1]][1]
+  i = i +1
+}
+
+row.names(mlm) = mlm$geno
+
+mmean = mmean[order(mmean$day),]
+mstd = mstd[order(mstd$day),]
+eb = eb[order(eb$day),]
+
+eb$y0 = mmean$mean - mstd$std
+eb$y1 = mmean$mean + mstd$std
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=6}
+
+lcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+pcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar=c(5.1, 4.1, 4.1, 15.1))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0, max(c(fmean$mean, mmean$mean))),
+     xlim = c(1,32),
+     ylab = 'Mean Velocity (cm/s)',
+     xlab = 'Day',
+     xaxt = 'n',
+     yaxt = 'n',
+     main = "Females",
+     frame.plot = F)
+
+#axis(1, at = fmean[fmean$geno == 'silent', 'day'])
+axis(1, at = 1:32, label = F, lwd = 3, line = -0.75)
+axis(1, at = 2*(1:16), tick = F, line = -0.75)
+
+axis(2, at = 0:2, label = F, lwd = 3, line = -0.2)
+axis(2, at = 0:2, tick = F, las = 1, line = -0.2)
+
+lines(x=c(0,0),
+      y=c(0,2),
+      lwd = 3,
+      xpd = T)
+
+lines(x=c(0,32),
+      y=c(0,0),
+      lwd = 3,
+      xpd = T)
+
+
+lines(x = fmean[fmean$geno == 'silent', 'day'],
+      y = fmean[fmean$geno == 'silent', 'mean'],
+      type = 'l',
+      col = lcol[1],
+      lwd = 2)
+
+lines(x = fmean[fmean$geno == 'A4V', 'day'],
+      y = fmean[fmean$geno == 'A4V', 'mean'],
+      type = 'l',
+      col = pcol[2],
+      lwd = 2)
+
+lines(x = fmean[fmean$geno == 'silentcha', 'day'],
+      y = fmean[fmean$geno == 'silentcha', 'mean'],
+      type = 'l',
+      col = pcol[3],
+      lwd = 2)
+
+lines(x = fmean[fmean$geno == 'A4Vcha', 'day'],
+      y = fmean[fmean$geno == 'A4Vcha', 'mean'],
+      type = 'l',
+      col = pcol[4],
+      lwd = 2)
+
+
+
+points(x = fmean[fmean$geno == 'silent', 'day'],
+       y = fmean[fmean$geno == 'silent', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = fmean[fmean$geno == 'A4V', 'day'],
+       y = fmean[fmean$geno == 'A4V', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = fmean[fmean$geno == 'silentcha', 'day'],
+       y = fmean[fmean$geno == 'silentcha', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = fmean[fmean$geno == 'A4Vcha', 'day'],
+       y = fmean[fmean$geno == 'A4Vcha', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+
+
+
+
+points(x = fmean[fmean$geno == 'silent', 'day'],
+       y = fmean[fmean$geno == 'silent', 'mean'],
+       bg = hex(pcol[1], .5),
+       col = pcol[1],
+       pch = 23,
+       cex =2)
+
+points(x = fmean[fmean$geno == 'A4V', 'day'],
+       y = fmean[fmean$geno == 'A4V', 'mean'],
+       bg = hex(pcol[2], .5),
+       col = pcol[2],
+       pch = 21,
+       cex =2)
+points(x = fmean[fmean$geno == 'silentcha', 'day'],
+       y = fmean[fmean$geno == 'silentcha', 'mean'],
+       bg = hex(pcol[3], .5),
+       col = pcol[3],
+       pch = 23,
+       cex =2)
+points(x = fmean[fmean$geno == 'A4Vcha', 'day'],
+       y = fmean[fmean$geno == 'A4Vcha', 'mean'],
+       bg = hex(pcol[4], .5),
+       col = pcol[4],
+       pch = 21,
+       cex =2)
+
+
+
+
+
+
+
+#legend(x = 29,
+#       y = 1.8,
+legend("topright",
+       legend = c('Silent', 'A4V',
+                  'ChAT>gbb;Silent', 'ChAT>gbb;A4V'),
+       pch = c(23,21,23,21,23,21),
+       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), hex(pcol[3], .5), hex(pcol[4], .5)),
+       bty = 'n',
+       y.intersp = 1.2,
+       pt.cex = 2,
+       xpd=TRUE)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=6}
+
+lcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+pcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar=c(5.1, 4.1, 4.1, 15.1))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0, max(c(fmean$mean, mmean$mean))),
+     xlim = c(1,32),
+     ylab = 'Mean Velocity (cm/s)',
+     xlab = 'Day',
+     xaxt = 'n',
+     yaxt = 'n',
+     main = "Females",
+     frame.plot = F)
+
+#axis(1, at = fmean[fmean$geno == 'silent', 'day'])
+axis(1, at = 1:32, label = F, lwd = 3, line = -0.75)
+axis(1, at = 2*(1:16), tick = F, line = -0.75)
+
+axis(2, at = 0:2, label = F, lwd = 3, line = -0.2)
+axis(2, at = 0:2, tick = F, las = 1, line = -0.2)
+
+lines(x=c(0,0),
+      y=c(0,2),
+      lwd = 3,
+      xpd = T)
+
+lines(x=c(0,32),
+      y=c(0,0),
+      lwd = 3,
+      xpd = T)
+
+lines(x = fmean[fmean$geno == 'silent', 'day'],
+      y = fmean[fmean$geno == 'silent', 'mean'],
+      type = 'l',
+      col = lcol[1],
+      lwd = 2)
+
+lines(x = fmean[fmean$geno == 'A4V', 'day'],
+      y = fmean[fmean$geno == 'A4V', 'mean'],
+      type = 'l',
+      col = pcol[2],
+      lwd = 2)
+
+
+
+lines(x = fmean[fmean$geno == 'silentok', 'day'],
+      y = fmean[fmean$geno == 'silentok', 'mean'],
+      type = 'l',
+      col = pcol[5],
+      lwd = 2)
+
+lines(x = fmean[fmean$geno == 'A4Vok', 'day'],
+      y = fmean[fmean$geno == 'A4Vok', 'mean'],
+      type = 'l',
+      col = pcol[6],
+      lwd = 2)
+
+
+
+points(x = fmean[fmean$geno == 'silent', 'day'],
+       y = fmean[fmean$geno == 'silent', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = fmean[fmean$geno == 'A4V', 'day'],
+       y = fmean[fmean$geno == 'A4V', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+
+points(x = fmean[fmean$geno == 'silentok', 'day'],
+       y = fmean[fmean$geno == 'silentok', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = fmean[fmean$geno == 'A4Vok', 'day'],
+       y = fmean[fmean$geno == 'A4Vok', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+
+
+
+points(x = fmean[fmean$geno == 'silent', 'day'],
+       y = fmean[fmean$geno == 'silent', 'mean'],
+       bg = hex(pcol[1], .5),
+       col = pcol[1],
+       pch = 23,
+       cex =2)
+
+points(x = fmean[fmean$geno == 'A4V', 'day'],
+       y = fmean[fmean$geno == 'A4V', 'mean'],
+       bg = hex(pcol[2], .5),
+       col = pcol[2],
+       pch = 21,
+       cex =2)
+
+points(x = fmean[fmean$geno == 'silentok', 'day'],
+       y = fmean[fmean$geno == 'silentok', 'mean'],
+       bg = hex(pcol[5], .5),
+       col = pcol[5],
+       pch = 23,
+       cex =2)
+points(x = fmean[fmean$geno == 'A4Vok', 'day'],
+       y = fmean[fmean$geno == 'A4Vok', 'mean'],
+       bg = hex(pcol[6], .5),
+       col = pcol[6],
+       pch = 21,
+       cex =2)
+
+
+
+
+
+
+#legend(x = 29,
+#       y = 1.8,
+legend("topright",
+       legend = c('Silent', 'A4V',
+                  'OK371>saxA;Silent', 'OK371>saxA;A4V'),
+       pch = c(23,21,23,21,23,21, 26, 32),
+       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), hex(pcol[5], .5), hex(pcol[6], .5)),
+       bty = 'n',
+       y.intersp = 1.2,
+       pt.cex = 2,
+       xpd=TRUE)
+
+```
+
+
+
+
+
+```{r echo = F, fig.width=10, fig.height=6}
+
+lcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+pcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar=c(5.1, 4.1, 4.1, 15.1))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0, max(c(fmean$mean, mmean$mean))),
+     xlim = c(1,32),
+     ylab = 'Mean Velocity (cm/s)',
+     xlab = 'Day',
+     xaxt = 'n',
+     yaxt = 'n',
+     main = "Males",
+     frame.plot = F)
+
+#axis(1, at = fmean[fmean$geno == 'silent', 'day'])
+axis(1, at = 1:32, label = F, lwd = 3, line = -0.75)
+axis(1, at = 2*(1:16), tick = F, line = -0.75)
+
+axis(2, at = 0:2, label = F, lwd = 3, line = -0.2)
+axis(2, at = 0:2, tick = F, las = 1, line = -0.2)
+
+lines(x=c(0,0),
+      y=c(0,2),
+      lwd = 3,
+      xpd = T)
+
+lines(x=c(0,32),
+      y=c(0,0),
+      lwd = 3,
+      xpd = T)
+
+lines(x = mmean[mmean$geno == 'silent', 'day'],
+      y = mmean[mmean$geno == 'silent', 'mean'],
+      type = 'l',
+      col = lcol[1],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'A4V', 'day'],
+      y = mmean[mmean$geno == 'A4V', 'mean'],
+      type = 'l',
+      col = pcol[2],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'silentcha', 'day'],
+      y = mmean[mmean$geno == 'silentcha', 'mean'],
+      type = 'l',
+      col = pcol[3],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'A4Vcha', 'day'],
+      y = mmean[mmean$geno == 'A4Vcha', 'mean'],
+      type = 'l',
+      col = pcol[4],
+      lwd = 2)
+
+
+
+points(x = mmean[mmean$geno == 'silent', 'day'],
+       y = mmean[mmean$geno == 'silent', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4V', 'day'],
+       y = mmean[mmean$geno == 'A4V', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = mmean[mmean$geno == 'silentcha', 'day'],
+       y = mmean[mmean$geno == 'silentcha', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4Vcha', 'day'],
+       y = mmean[mmean$geno == 'A4Vcha', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+
+
+
+
+points(x = mmean[mmean$geno == 'silent', 'day'],
+       y = mmean[mmean$geno == 'silent', 'mean'],
+       bg = hex(pcol[1], .5),
+       col = pcol[1],
+       pch = 23,
+       cex =2)
+
+points(x = mmean[mmean$geno == 'A4V', 'day'],
+       y = mmean[mmean$geno == 'A4V', 'mean'],
+       bg = hex(pcol[2], .5),
+       col = pcol[2],
+       pch = 21,
+       cex =2)
+points(x = mmean[mmean$geno == 'silentcha', 'day'],
+       y = mmean[mmean$geno == 'silentcha', 'mean'],
+       bg = hex(pcol[3], .5),
+       col = pcol[3],
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4Vcha', 'day'],
+       y = mmean[mmean$geno == 'A4Vcha', 'mean'],
+       bg = hex(pcol[4], .5),
+       col = pcol[4],
+       pch = 21,
+       cex =2)
+
+
+
+
+
+
+
+#legend(x = 29,
+#       y = 1.8,
+legend("topright",
+       legend = c('Silent', 'A4V',
+                  'ChAT>gbb;Silent', 'ChAT>gbb;A4V'),
+       pch = c(23,21,23,21,23,21, 26, 32),
+       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), hex(pcol[3], .5),
+                hex(pcol[4], .5)),
+       bty = 'n',
+       y.intersp = 1.2,
+       pt.cex = 2,
+       xpd=TRUE)
+
+```
+
+
+```{r echo = F, fig, fig.width=10, fig.height=6}
+
+lcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+pcol = c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar=c(5.1, 4.1, 4.1, 15.1))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0, max(c(fmean$mean, mmean$mean))),
+     xlim = c(1,32),
+     ylab = 'Mean Velocity (cm/s)',
+     xlab = 'Day',
+     xaxt = 'n',
+     yaxt = 'n',
+     main = "Males",
+     frame.plot = F)
+
+#axis(1, at = fmean[fmean$geno == 'silent', 'day'])
+axis(1, at = 1:32, label = F, lwd = 3, line = -0.75)
+axis(1, at = 2*(1:16), tick = F, line = -0.75)
+
+axis(2, at = 0:2, label = F, lwd = 3, line = -0.2)
+axis(2, at = 0:2, tick = F, las = 1, line = -0.2)
+
+lines(x=c(0,0),
+      y=c(0,2),
+      lwd = 3,
+      xpd = T)
+
+lines(x=c(0,32),
+      y=c(0,0),
+      lwd = 3,
+      xpd = T)
+
+lines(x = mmean[mmean$geno == 'silent', 'day'],
+      y = mmean[mmean$geno == 'silent', 'mean'],
+      type = 'l',
+      col = lcol[1],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'A4V', 'day'],
+      y = mmean[mmean$geno == 'A4V', 'mean'],
+      type = 'l',
+      col = pcol[2],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'silentok', 'day'],
+      y = mmean[mmean$geno == 'silentok', 'mean'],
+      type = 'l',
+      col = pcol[5],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'A4Vok', 'day'],
+      y = mmean[mmean$geno == 'A4Vok', 'mean'],
+      type = 'l',
+      col = pcol[6],
+      lwd = 2)
+
+
+
+points(x = mmean[mmean$geno == 'silent', 'day'],
+       y = mmean[mmean$geno == 'silent', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4V', 'day'],
+       y = mmean[mmean$geno == 'A4V', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = mmean[mmean$geno == 'silentok', 'day'],
+       y = mmean[mmean$geno == 'silentok', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4Vcha', 'day'],
+       y = mmean[mmean$geno == 'A4Vcha', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+
+
+
+
+points(x = mmean[mmean$geno == 'silent', 'day'],
+       y = mmean[mmean$geno == 'silent', 'mean'],
+       bg = hex(pcol[1], .5),
+       col = pcol[1],
+       pch = 23,
+       cex =2)
+
+points(x = mmean[mmean$geno == 'A4V', 'day'],
+       y = mmean[mmean$geno == 'A4V', 'mean'],
+       bg = hex(pcol[2], .5),
+       col = pcol[2],
+       pch = 21,
+       cex =2)
+points(x = mmean[mmean$geno == 'silentok', 'day'],
+       y = mmean[mmean$geno == 'silentok', 'mean'],
+       bg = hex(pcol[5], .5),
+       col = pcol[5],
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4Vok', 'day'],
+       y = mmean[mmean$geno == 'A4Vok', 'mean'],
+       bg = hex(pcol[6], .5),
+       col = pcol[6],
+       pch = 21,
+       cex =2)
+
+
+
+
+
+
+
+#legend(x = 29,
+#       y = 1.8,
+legend("topright",
+       legend = c('Silent', 'A4V',
+                  'OK371>gbb;Silent', 'OK371>gbb;A4V'),
+       pch = c(23,21,23,21,23,21, 26, 32),
+       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), hex(pcol[5], .5),
+                hex(pcol[6], .5)),
+       bty = 'n',
+       y.intersp = 1.2,
+       pt.cex = 2,
+       xpd=TRUE)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=6}
+
+fig1f = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 1F left_females.csv", header = T)
+
+
+lcol = c('navy', 'deepskyblue', 'deeppink2', 'grey70')#c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+
+par(mar=c(5.1, 4.1, 4.1, 15.1))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0, 100),
+     xlim = c(1,80),
+     ylab = 'Alive Flies (%)',
+     xlab = 'Day',
+     xaxt = 'n',
+     yaxt = 'n',
+     main = "Females",
+     frame.plot = F)
+
+#axis(1, at = fmean[fmean$geno == 'silent', 'day'])
+axis(1, at = 20*(0:4), label = F, lwd = 3, line = -0.75)
+axis(1, at = 20*(0:4), tick = F, line = -0.75)
+
+axis(2, at = 20*(0:5), label = F, lwd = 3, line = -0.8)
+axis(2, at = 20*(0:5), tick = F, las = 1, line = -0.8)
+
+lines(x=c(0,0),
+      y=c(0,100),
+      lwd = 3,
+      xpd = T)
+
+lines(x=c(0,85),
+      y=c(0,0),
+      lwd = 3,
+      xpd = T)
+
+lines(x = fig1f$day,
+      y = fig1f$w1118,
+      type = 'l',
+      col = lcol[1],
+      lwd = 2)
+
+lines(x = fig1f$day,
+      y = fig1f$dsodWT,
+      type = 'l',
+      col = lcol[2],
+      lwd = 2)
+
+lines(x = fig1f$day,
+      y = fig1f$A4V,
+      type = 'l',
+      col = lcol[3],
+      lwd = 2)
+
+lines(x = fig1f$day,
+      y = fig1f$A4V.X16,
+      type = 'l',
+      col = lcol[4],
+      lwd = 2)
+
+
+
+
+#legend(x = 29,
+#       y = 1.8,
+legend("topright",
+       legend = c('w1118', 'WT(cr)',
+                  'A4V', 'A4V/X16'),
+       pch = 21,
+       pt.bg = c(hex(lcol[1], .5), hex(lcol[2], .5), hex(lcol[3], .5),
+                hex(lcol[4], .5)),
+       bty = 'n',
+       y.intersp = 1.2,
+       pt.cex = 2,
+       xpd=TRUE)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=6}
+
+fig1g = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 1G left_males.csv", header = T)
+
+
+lcol = c('navy', 'deepskyblue', 'deeppink2', 'grey70')#c('deepskyblue',  'deeppink', 'darkgreen', "gold3", 'navy', "firebrick")#c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+
+par(mar=c(5.1, 4.1, 4.1, 15.1))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0, 100),
+     xlim = c(1,80),
+     ylab = 'Alive Flies (%)',
+     xlab = 'Day',
+     xaxt = 'n',
+     yaxt = 'n',
+     main = "Males",
+     frame.plot = F)
+
+#axis(1, at = fmean[fmean$geno == 'silent', 'day'])
+axis(1, at = 20*(0:4), label = F, lwd = 3, line = -0.75)
+axis(1, at = 20*(0:4), tick = F, line = -0.75)
+
+axis(2, at = 20*(0:5), label = F, lwd = 3, line = -0.8)
+axis(2, at = 20*(0:5), tick = F, las = 1, line = -0.8)
+
+lines(x=c(0,0),
+      y=c(0,100),
+      lwd = 3,
+      xpd = T)
+
+lines(x=c(0,85),
+      y=c(0,0),
+      lwd = 3,
+      xpd = T)
+
+lines(x = fig1g$day,
+      y = fig1g$w1118,
+      type = 'l',
+      col = lcol[1],
+      lwd = 2)
+
+lines(x = fig1g$day,
+      y = fig1g$dsodWT,
+      type = 'l',
+      col = lcol[2],
+      lwd = 2)
+
+lines(x = fig1g$day,
+      y = fig1g$A4V,
+      type = 'l',
+      col = lcol[3],
+      lwd = 2)
+
+lines(x = fig1g$day,
+      y = fig1g$A4V.X16,
+      type = 'l',
+      col = lcol[4],
+      lwd = 2)
+
+
+
+
+#legend(x = 29,
+#       y = 1.8,
+legend("topright",
+       legend = c('w1118', 'WT(cr)',
+                  'A4V', 'A4V/X16'),
+       pch = 21,
+       pt.bg = c(hex(lcol[1], .5), hex(lcol[2], .5), hex(lcol[3], .5),
+                hex(lcol[4], .5)),
+       bty = 'n',
+       y.intersp = 1.2,
+       pt.cex = 2,
+       xpd=TRUE)
+
+```
+
+
+
