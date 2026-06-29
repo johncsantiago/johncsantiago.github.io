@@ -1,0 +1,60 @@
+﻿Genotype,Replicate,DataSet,Eclosed,NotEclosed,Total,PercentEclosed
+w1118,1,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",83,2,85,97.64705882
+w1118,2,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",111,1,112,99.10714286
+w1118,3,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",121,0,121,100
+w1118,4,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",131,1,132,99.24242424
+w1118,5,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",132,3,135,97.77777778
+w1118,6,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",125,0,125,100
+w1118,7,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",139,0,139,100
+w1118,8,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",102,0,102,100
+WTloxP,1,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",44,2,46,95.65217391
+WTloxP,2,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",45,1,46,97.82608696
+WTloxP,3,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",84,0,84,100
+WTloxP,4,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",16,0,16,100
+G85Rhr,1,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",0,21,21,0
+G85Rhr,2,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",0,28,28,0
+G85Rhr,3,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",0,36,36,0
+G85Rhr,4,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",0,39,39,0
+WTcr,1,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",10,1,11,90.90909091
+WTcr,2,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",45,3,48,93.75
+WTcr,3,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",152,3,155,98.06451613
+WTcr,4,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",102,1,103,99.02912621
+WTcr,5,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",161,4,165,97.57575758
+WTcr,6,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",73,0,73,100
+G85Rcr,1,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",0,11,11,0
+G85Rcr,2,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",0,17,17,0
+G85Rcr,3,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",0,24,24,0
+G85Rcr,4,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",0,19,19,0
+G85Rcr,5,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",0,13,13,0
+G85Rcr,6,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",0,10,10,0
+G85Rcr,7,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",1,33,34,2.941176471
+G85Rcr,8,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",0,12,12,0
+G85Rcr,9,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",1,11,11,9.090909091
+G85R/X16,1,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",0,14,14,0
+G85R/X16,2,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",0,10,10,0
+G85R/X16,3,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",0,12,12,0
+G85R/X16,4,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",0,12,12,0
+WTcr/X16,1,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",39,0,39,100
+WTcr/X16,2,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",12,0,12,100
+WTcr/X16,3,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",28,0,28,100
+WTcr/X16,4,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",20,0,20,100
+A4V,1,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",12,1,13,92.30769231
+A4V,2,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",18,3,21,85.71428571
+A4V,3,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",36,1,37,97.2972973
+A4V,4,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",21,2,23,91.30434783
+A4V,5,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",29,0,29,100
+A4V,6,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",8,2,10,80
+A4V/X16,1,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",26,0,26,100
+A4V/X16,2,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",27,3,30,90
+A4V/X16,3,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",17,0,17,100
+A4V/X16,4,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",13,4,17,76.47058824
+A4V/X16,5,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",24,0,24,100
+A4V/X16,6,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",9,0,9,100
+A4V/X16,7,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",12,0,12,100
+A4V/X16,8,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",11,0,11,100
+A4V/X16,9,"YN, 21.08.23_sod1null.df1.Jsedited.xlsx",10,0,10,100
+A4V/G85Rcr,1,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",10,49,59,16.94915254
+A4V/G85Rcr,2,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",1,8,9,11.11111111
+A4V/G85Rcr,3,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",0,20,20,0
+A4V/G85Rcr,4,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",0,27,27,0
+A4V/G85Rcr,5,"KR, Figure 1B Eclosion Data AV4xX16 eclosion.xlsx",3,17,20,15
